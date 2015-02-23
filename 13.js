@@ -1,18 +1,31 @@
-//Number
 //3-10 --> 0-7
 //J,Q,K,A,2 --> 8->12
 var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
-
-//Suits
-//Spade, Clover, Diamond, Hearts --> 0-3
 var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
+var currentGame;
 
-var Card = function (num, suit) {
+var Card = function (a, b) {
 
-	this.num = num;
-	this.suit = suit;
-	this.val = suitValues[suit] + ":" + numValues[num];
-	
+	if (b === undefined) {
+		var divide = a.indexOf(":");
+
+		var thisNum = a.slice(divide+1);
+		if (!isNaN(parseInt(thisNum))) {
+			thisNum = parseInt(thisNum);
+		};
+
+		this.num = numValues.indexOf(thisNum);
+
+		this.suit = suitValues.indexOf(a.slice(0,divide));
+		this.val = a;
+	}
+
+	else {
+		this.num = a;
+		this.suit = b;
+		this.val = suitValues[b] + ":" + numValues[a];
+	}
+
 }
 var startingCard = new Card(0,0);
 
@@ -199,17 +212,17 @@ var Game = function() {
 
 				var currentCard = currentPlayersHand[j];
 
-				var cardHTML = "<div class='card panel-primary'>";
-				cardHTML += "<div class='panel-heading'>";
+				var cardHTML = "<div class='card panel-primary' alt='";
 				cardHTML += currentCard.val;
+				cardHTML += "'>";
 
-				cardHTML += "</div>";
+				cardHTML += "<div class='panel-heading'>";
 
-				cardHTML += "<div class ='panel-body'>";
-				cardHTML += currentCard.suit;
+				cardHTML += "<span id='card_font'>";
+				cardHTML += numValues[currentCard.num];
+				cardHTML += "</span>";
 
 				iconHTML = "<img class='";
-
 				switch (currentCard.suit) {
 					case 0:
 						iconHTML += "spade";
@@ -226,8 +239,12 @@ var Game = function() {
 				}
 
 				iconHTML += "' src='img_trans.gif'></img>";
-
 				cardHTML += iconHTML;
+
+				cardHTML += "</div>";
+
+				cardHTML += "<div class ='panel-body'>";
+
 
 				cardHTML += "</div>";
 				cardHTML += "</div>";
@@ -246,17 +263,55 @@ var Game = function() {
 
 
 	$(document).ready(function() {
-		var a = new Game();
-		a.initialize();
-		a.showCards();
+		currentGame = new Game();
+		currentGame.initialize();
+		currentGame.displayCards();
 	});
 
 $(document).on('click','.card', function() {
+	//highlight DOM obj
 	var thisCard = $(this);
+	thisCard.toggleClass('selected');
 
-	//$(this).toggleClass('selected');
-	thisCard.toggleClass('selected')
+	//get player
+	var selectedPlayer = thisCard.parent().attr('id');
+	var playerNum = selectedPlayer.slice(selectedPlayer.length-1);
+	playerNum -= 1;
+	selectedPlayer = currentGame.players[playerNum];
 
+	//add or remove card
+	thisCard = new Card(thisCard.attr('alt'));
+
+	var cardsToPlay = selectedPlayer.cardsToPlay;
+	console.log(cardsToPlay)
+
+	if (cardsToPlay.length === 0) {
+		cardsToPlay.push(thisCard);
+	}
+
+	else {
+		console.log ('not 0')
+
+		for (var i=0; i< cardsToPlay.length; i++) {
+
+			var currentCard = cardsToPlay[i];
+			if (typeof currentCard === "object" && currentCard.val === thisCard.val) {
+				cardsToPlay.splice(i,1);
+				break;
+			}
+
+			if (i === cardsToPlay.length-1) {
+				cardsToPlay.push(thisCard);
+				break;
+			}
+
+
+		}
+	}
+
+
+
+	console.log(selectedPlayer.cardsToPlay);
 })
 
 // a.findStartingPlayer();
