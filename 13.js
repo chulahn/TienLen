@@ -5,14 +5,14 @@ var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
 var currentGame;
 
 var Card = function (a, b) {
-
+	"use strict";
 	if (b === undefined) {
 		var divide = a.indexOf(":");
 
 		var thisNum = a.slice(divide+1);
 		if (!isNaN(parseInt(thisNum))) {
 			thisNum = parseInt(thisNum);
-		};
+		}
 
 		this.num = numValues.indexOf(thisNum);
 
@@ -26,21 +26,38 @@ var Card = function (a, b) {
 		this.val = suitValues[b] + ":" + numValues[a];
 	}
 
-}
+};
 var startingCard = new Card(0,0);
 
 
 var Player = function() {
+	"use strict";
 	this.hand = [];
 	this.cardsToPlay = [];
-	this.isLeader;
+	this.isLeader = false;
 
 	//onclick Player.cardsToPlay.push
-}
+};
 
 var Hand = function(cards) {
+	"use strict";
 	//cards is an Array of Card objects
 	this.cards = cards;
+
+	this.findCard = function(cardToFind) {
+		for (var i=0; i<this.cards.length; i++) {
+			var currentCard = this.cards[i];
+			//didn't reach the end
+			if (i !== this.cards.length-1) {
+				if (currentCard.val === cardToFind.val) {
+					return i;
+				}
+			}
+			else {
+				return -1;
+			}
+		}
+	};
 
 	this.isValid = function() {
 
@@ -52,7 +69,7 @@ var Hand = function(cards) {
 			}
 
 			else {
-				return (a.num - b.num)
+				return (a.num - b.num);
 			}
 		});
 
@@ -97,14 +114,17 @@ var Hand = function(cards) {
 
 					else if (i === sorted.length-1){
 						return true;
-					}	
-				}			
+					}
+				}
 			}
-		}		
-	}
-}
+		}
+	};
+};
 
 Player.prototype.playCards = function() {
+	"use strict";
+	var player = this;
+	var playersHand = this.hand;
 
 	//check rule
 	//if cardsToPlay matches rule, play
@@ -112,22 +132,29 @@ Player.prototype.playCards = function() {
 
 	//remove cards from hand
 	this.cardsToPlay.forEach(function (cardToPlay) {
-		var cardLocation = this.hand.indexOf(cardToPlay);
-		this.hand.splice(cardLocation,1);
+		var cardLocation = playersHand.findCard(cardToPlay);
+		console.log('removing card at' , cardLocation);
+
+		if (cardLocation !== -1) {
+			playersHand.cards.splice(cardLocation,1);
+			playersHand = new Hand(playersHand.cards);
+		}
 	});
 
+	this.cardsToPlay = [];
 	this.isLeader = true;
-}
+};
 
 
 
 var Game = function() {
 
+	"use strict"
 	this.deck = [];
 	this.players = [];
 
-	this.currentRule;
-	this.leader;
+	this.currentRule = "Start";
+	this.leader = null;
 
 	this.createDeck = function() {
 
@@ -138,7 +165,7 @@ var Game = function() {
 				this.deck.push(new Card(i, j));
 			}
 		}
-	}
+	};
 
 	this.createPlayers = function() {
 
@@ -148,7 +175,7 @@ var Game = function() {
 			var newPlayer = new Player();
 			this.players.push(newPlayer);
 		}
-	}
+	};
 
 	this.dealCards = function() {
 
@@ -167,39 +194,44 @@ var Game = function() {
 				currentPlayer.hand = new Hand(currentPlayer.hand)
 			}
 		}
-	}
+	};
 
 	this.setRule = function(rule) {
 
-		for (c in this.players) {
+		"use strict";
+		for (var c in this.players) {
 			var currentPlayer = this.players[c];
 			currentPlayer.rule = this.currentRule;
 		}
-	}
+	};
 
 	this.initialize = function() {
 		this.createDeck();
 		this.createPlayers();
 		this.dealCards();
 		this.setRule();
-	}
+	};
 
 	this.findStartingPlayer = function() {
 
-		for (p in this.players) {
-			var currentPlayer = this.players[p];
+		for (var i=0; i< this.players.length; i++) {
+			var currentPlayer = this.players[i];
 
-			for (c in currentPlayer.hand) {
-				var currentCard = currentPlayer.hand[c];
+			for (var j=0; j<currentPlayer.hand.cards.length; j++) {
+				var currentCard = currentPlayer.hand.cards[j];
 
 				if (currentCard.val === startingCard.val) {
-					alert("Player " + p + " has the 3 of Spades");
+					var playerNumber = (i+1);
+					alert("Player " + playerNumber + " has the 3 of Spades");
+					$("#player" + playerNumber).addClass("activePlayer");
+					$(".card[alt='Spade:3']").addClass("selected")
+
 					this.leader = currentPlayer;
 					return currentPlayer;
 				}
 			}
 		}
-	}
+	};
 
 	this.displayCards = function() {
 
@@ -222,7 +254,7 @@ var Game = function() {
 				cardHTML += numValues[currentCard.num];
 				cardHTML += "</span>";
 
-				iconHTML = "<img class='";
+				var iconHTML = "<img class='";
 				switch (currentCard.suit) {
 					case 0:
 						iconHTML += "spade";
@@ -251,27 +283,34 @@ var Game = function() {
 
 				var selector = "#player" + (i+1);
 				$("#player" + (i + 1) + "").append(cardHTML);
-
-
 			}
 
 
 		}
-	}
+	};
 
 }
 
 
 	$(document).ready(function() {
+		"use strict";
 		currentGame = new Game();
 		currentGame.initialize();
 		currentGame.displayCards();
+
+
+		$(".card[alt='Spade:3']").off('click');
+
+		console.log($(".card[alt='Spade:3']"));
 	});
 
-$(document).on('click','.card', function() {
+
+$(document).on('click', '.card', function() {
+	"use strict";
 	//highlight DOM obj
 	var thisCard = $(this);
 	thisCard.toggleClass('selected');
+	console.log('clicked on card ', thisCard.attr('alt'));
 
 	//get player
 	var selectedPlayer = thisCard.parent().attr('id');
@@ -283,14 +322,12 @@ $(document).on('click','.card', function() {
 	thisCard = new Card(thisCard.attr('alt'));
 
 	var cardsToPlay = selectedPlayer.cardsToPlay;
-	console.log(cardsToPlay)
 
 	if (cardsToPlay.length === 0) {
 		cardsToPlay.push(thisCard);
 	}
 
 	else {
-		console.log ('not 0')
 
 		for (var i=0; i< cardsToPlay.length; i++) {
 
@@ -311,8 +348,41 @@ $(document).on('click','.card', function() {
 
 
 
-	console.log(selectedPlayer.cardsToPlay);
-})
+});
+
+$(document).on('click', '.btn.playCards', function() {
+
+	"use strict";
+	var thisPlayer = $(this).closest('.player');
+	var playerNum = thisPlayer.attr('id');
+
+	var playerIndex = playerNum.slice(playerNum.length-1);
+	playerIndex = parseInt(playerIndex) - 1;
+
+	var currentPlayer = currentGame.players[playerIndex];
+
+	var handToPlay = new Hand(currentPlayer.cardsToPlay);
+
+	if (handToPlay.isValid()) {
+		currentPlayer.playCards();
+
+		console.log('successfully removed.  ', currentPlayer.hand.cards.length , ' cards left');
+
+		var cardsToRemove = thisPlayer.children('.selected');
+		cardsToRemove.remove();
+
+		console.log(thisPlayer.children('.selected').length);
+		//remove cards from players hand
+	}
+
+	else {
+		console.log('cannot play these cards');
+	}
+
+
+
+
+});
 
 // a.findStartingPlayer();
 
