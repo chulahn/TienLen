@@ -26,6 +26,26 @@ var Card = function (a, b) {
 		this.val = suitValues[b] + ":" + numValues[a];
 	}
 
+	this.compareTo = function (b) {
+		if (this.suit > b.suit) {
+			return 1;
+		}
+		else if (this.suit === b.suit) {
+			if (this.num > b. num) {
+				return 1;
+			}
+			else if (this.num === b.num) {
+				return 0;
+			}
+			else {
+				return -1;
+			}
+		}
+		else {
+			return -1;
+		}
+	}
+
 };
 var startingCard = new Card(0,0);
 
@@ -39,7 +59,13 @@ var Player = function() {
 	//onclick Player.selectedCards.push
 };
 
+//Hand object takes in array of Cards
 var Hand = function(cards) {
+	if (cards instanceof Card) {
+		var a = [];
+		a.push(cards);
+		cards = a;
+	}
 	"use strict";
 	//cards is an Array of Card objects
 	this.cards = cards;
@@ -53,7 +79,6 @@ var Hand = function(cards) {
 			return (a.num - b.num);
 		}
 	});
-
 	//searches hand for a card that matches cardToFind's value
 	this.findCard = function(cardToFind) {
 		for (var i=0; i<this.cards.length; i++) {
@@ -132,7 +157,6 @@ var Hand = function(cards) {
 		if (sortedCards.length === 1) {
 			return "Single";
 		}
-
 		else {
 			for (var i=0; i<sortedCards.length; i++) {
 				var currentCard = sortedCards[i];
@@ -141,7 +165,6 @@ var Hand = function(cards) {
 				}
 
 				if (sortedCards.length === 2) {
-					//console.log(currentCard , nextCard)
 
 					if (currentCard.num === nextCard.num) {
 						return "Doubles";
@@ -183,39 +206,42 @@ var Hand = function(cards) {
 	}
 
 	this.getValue = function() {
-		var cards = this.cards;
-
-		this.val = handVal = {};
-		if (cards.length === 1) {
-			handVal.type = "Single";
-			handVal.highest = cards[0];
+		var cards = this.sortedCards;
+		var handVal = this.val = {};
+		//if hand is valid then return
+		console.log(this)
+		if (this.getType()) {
+			handVal.type = this.getType();
+			handVal.highest = cards[cards.length-1];
 			return handVal;
 		}
 
-		else if (cards.length === 2) {
-			handVal.type = "Double";
-			handVal.highest = cards[0];
+	}
+	this.getValue();
+
+	//checks if hand is valid, and if it is beter
+	this.beats = function(b) {
+
+		if (this.isValid()) {
+			var thisCard = this.val.highest;
+			var otherCard = b.val.highest;
+
+			var value = thisCard.compareTo(otherCard);
+
+			return (value === 1);
 		}
+
+
 
 	}
 
 	this.followsRule = function() {
-		var cards = this.cards;
+		if (currentGame.currentRule !== "Start") {
+			return (this.getType() === currentGame.currentRule) && (this.beatsHand(currentGame.lastPlayedHand));
+		}
 
-		switch (currentGame.currentRule) {
-
-			case "Start":
-				return (cards.findCard(startingCard) !== -1)
-			case "Single":
-				return (cards.length === 1);
-			case "Doubles":
-				return (cards.length === 2);
-			case "Triples":
-				return (cards.length === 3);
-
-
-
-
+		else {
+			return this.isValid();
 		}
 	}
 };
@@ -478,6 +504,7 @@ $(document).on('click', '.btn.playCards', function() {
 
 		//Show Current Rule and next player's turn,
 		$("#currentRule").html(selectedCards.getType());
+		currentGame.currentRule = selectedCards.getType();
 
 
 		var nextPlayerIndex = playerIndex;
