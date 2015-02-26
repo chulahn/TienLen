@@ -43,10 +43,19 @@ var Hand = function(cards) {
 	"use strict";
 	//cards is an Array of Card objects
 	this.cards = cards;
+	this.sortedCards = cards.slice().sort(function (a,b) {
+
+		if (a.num === b.num) {
+			return (a.suit - b.suit);
+		}
+
+		else {
+			return (a.num - b.num);
+		}
+	});
 
 	//searches hand for a card that matches cardToFind's value
 	this.findCard = function(cardToFind) {
-		console.log(this.cards.length)
 		for (var i=0; i<this.cards.length; i++) {
 			var currentCard = this.cards[i];
 			//didn't reach the end
@@ -69,39 +78,29 @@ var Hand = function(cards) {
 	this.isValid = function() {
 
 		var cards = this.cards;
+		var sortedCards = this.sortedCards;
 
-		var sorted = cards.sort(function (a,b) {
-			if (a.num === b.num) {
-				return (a.suit - b.suit);
-			}
+		for (var i=0; i<sortedCards.length; i++) {
 
-			else {
-				return (a.num - b.num);
-			}
-		});
-
-
-		for (var i=0; i<sorted.length; i++) {
-
-			if (sorted.length === 1) {
+			if (sortedCards.length === 1) {
 				return true;
 			}
 
 			else {
-				var currentCard = sorted[i];
-				if (i !== sorted.length-1) {
-					var nextCard = sorted[i+1];
+				var currentCard = sortedCards[i];
+				if (i !== sortedCards.length-1) {
+					var nextCard = sortedCards[i+1];
 				}
 
-				if (sorted.length === 2) {
+				if (sortedCards.length === 2) {
 					return (currentCard.num === nextCard.num);
 				}
 
-				else if (sorted.length > 2) {
+				else if (sortedCards.length > 2) {
 					//check doubles, triples, 4ofakind
 					var numToMatch = currentCard.num;
 					if (i===0) {
-						var allCardsMatch = sorted.every(function(card) {
+						var allCardsMatch = sortedCards.every(function(card) {
 												return (card.num === numToMatch);
 											});
 
@@ -112,20 +111,93 @@ var Hand = function(cards) {
 
 					//was not double,triple,4ofakind
 					//did not reach end, check if next value is 1 more
-					else if (i !== sorted.length-1) {
+					else if (i !== sortedCards.length-1) {
 						numToMatch = currentCard.num+1;
 						if (nextCard.num !== numToMatch) {
 							return false;
 						}
 					}
 
-					else if (i === sorted.length-1){
+					else if (i === sortedCards.length-1){
 						return true;
 					}
 				}
 			}
 		}
 	};
+
+
+	this.getType = function() {
+		var sortedCards = this.sortedCards;
+		if (sortedCards.length === 1) {
+			return "Single";
+		}
+
+		else {
+			for (var i=0; i<sortedCards.length; i++) {
+				var currentCard = sortedCards[i];
+				if (i !== sortedCards.length-1) {
+					var nextCard = sortedCards[i+1];
+				}
+
+				if (sortedCards.length === 2) {
+					//console.log(currentCard , nextCard)
+
+					if (currentCard.num === nextCard.num) {
+						return "Doubles";
+					}
+
+					else {
+						return;
+					}
+				}
+
+				else if (sortedCards.length > 2) {
+					//check doubles, triples, 4ofakind
+					var numToMatch = currentCard.num;
+					if (i===0) {
+						var allCardsMatch = sortedCards.every(function(card) {
+							return (card.num === numToMatch);
+						});
+
+						if (allCardsMatch) {
+							return "Triples";
+						}
+					}
+
+					//check for straights
+					//did not reach end, check if next value is 1 more
+					else if (i !== sortedCards.length-1) {
+						numToMatch = currentCard.num+1;
+						if (nextCard.num !== numToMatch) {
+							return;
+						}
+					}
+
+					else if (i === sortedCards.length-1) {
+						return "Straight " + sortedCards.length;
+					}
+				}
+			}
+		}
+	}
+
+	this.getValue = function() {
+		var cards = this.cards;
+
+		this.val = handVal = {};
+		if (cards.length === 1) {
+			handVal.type = "Single";
+			handVal.highest = cards[0];
+			return handVal;
+		}
+
+		else if (cards.length === 2) {
+			handVal.type = "Double";
+			handVal.highest = cards[0];
+		}
+
+	}
 
 	this.followsRule = function() {
 		var cards = this.cards;
@@ -158,10 +230,9 @@ Player.prototype.playCards = function() {
 	//else throw error
 
 	//remove cards from hand
-	if (cardsToPlay.isValid() === true) {
+	if (cardsToPlay.getType() !== null) {
 		cardsToPlay.cards.forEach(function (cardToPlay) {
 			var cardLocation = playersHand.findCard(cardToPlay);
-			console.log('removing card at' , cardLocation);
 
 			if (cardLocation !== -1) {
 				playersHand.cards.splice(cardLocation,1);
@@ -185,12 +256,13 @@ Player.prototype.playCards = function() {
 
 var Game = function() {
 
-	"use strict"
+	"use strict";
 	this.deck = [];
 	this.players = [];
-
 	this.currentRule = "Start";
 	this.leader = null;
+	this.lastPlayedHand = null;
+
 
 	this.createDeck = function() {
 
@@ -232,20 +304,10 @@ var Game = function() {
 		}
 	};
 
-	this.setRule = function(rule) {
-
-		"use strict";
-		for (var c in this.players) {
-			var currentPlayer = this.players[c];
-			currentPlayer.rule = this.currentRule;
-		}
-	};
-
 	this.initialize = function() {
 		this.createDeck();
 		this.createPlayers();
 		this.dealCards();
-		this.setRule();
 	};
 
 	this.findStartingPlayer = function() {
@@ -258,11 +320,13 @@ var Game = function() {
 
 				if (currentCard.val === startingCard.val) {
 					var playerNumber = (i+1);
-					alert("Player " + playerNumber + " has the 3 of Spades");
+					$('#currentPlayersTurn').html("Player " + playerNumber);
 					$("#player" + playerNumber).addClass("activePlayer");
-					$(".card[alt='Spade:3']").addClass("selected")
+					$(".card[alt='Spade:3']").addClass("selected");
 
 					this.leader = currentPlayer;
+					this.currentRule = "Start";
+					currentPlayer.selectedCards.push(startingCard);
 					return currentPlayer;
 				}
 			}
@@ -333,52 +397,47 @@ var Game = function() {
 		currentGame = new Game();
 		currentGame.initialize();
 		currentGame.displayCards();
+		currentGame.findStartingPlayer();
 
-
-		$(".card[alt='Spade:3']").off('click');
-
-		console.log($(".card[alt='Spade:3']"));
 	});
 
 
 $(document).on('click', '.card', function() {
 	"use strict";
 	//highlight DOM obj
-	var thisCard = $(this);
-	thisCard.toggleClass('selected');
-	console.log('clicked on card ', thisCard.attr('alt'));
+	var clickedCard = $(this);
+	clickedCard.toggleClass('selected');
+	console.log('clicked on card ', clickedCard.attr('alt'));
+
 
 	//get player
-	var selectedPlayer = thisCard.parent().attr('id');
+	var selectedPlayer = clickedCard.parent().attr('id');
 	var playerNum = selectedPlayer.slice(selectedPlayer.length-1);
 	playerNum -= 1;
 	selectedPlayer = currentGame.players[playerNum];
 
-	//add or remove card
-	thisCard = new Card(thisCard.attr('alt'));
-
+	//see if clicked card is already selected.  add/remove
 	var selectedCards = selectedPlayer.selectedCards;
+	clickedCard = new Card(clickedCard.attr('alt'));
 
 	if (selectedCards.length === 0) {
-		selectedCards.push(thisCard);
+		selectedCards.push(clickedCard);
 	}
 
 	else {
-
 		for (var i=0; i< selectedCards.length; i++) {
-
 			var currentCard = selectedCards[i];
-			if (typeof currentCard === "object" && currentCard.val === thisCard.val) {
+			//if already in, remove
+			if (typeof currentCard === "object" && currentCard.val === clickedCard.val) {
 				selectedCards.splice(i,1);
 				break;
 			}
 
+			//if reached the end, and it wasnt already removed, add
 			if (i === selectedCards.length-1) {
-				selectedCards.push(thisCard);
+				selectedCards.push(clickedCard);
 				break;
 			}
-
-
 		}
 	}
 
@@ -390,37 +449,44 @@ $(document).on('click', '.btn.playCards', function() {
 
 	"use strict";
 	var thisPlayer = $(this).closest('.player');
-	var playerNum = thisPlayer.attr('id');
-	var playerIndex = playerNum.slice(playerNum.length-1);
+	var playerIndex = thisPlayer.attr('id');
+	playerIndex = playerIndex.slice(playerIndex.length-1);
 	playerIndex = parseInt(playerIndex) - 1;
 
 	var currentPlayer = currentGame.players[playerIndex];
+	console.log(currentPlayer)
 	var selectedCards = new Hand(currentPlayer.selectedCards);
 
-	if (selectedCards.isValid()) {
+	console.log(selectedCards.getType())
+	if (selectedCards.getType()) {
+		//display cards that were played, and save to currentGame obj
 		var cardsToRemove = thisPlayer.find('.selected');
-
 		var lastPlayedHTML = "";
 		cardsToRemove.each(function() {
-			console.log($(this));
 			lastPlayedHTML += $(this)[0].outerHTML;
-			console.log(1)
-			console.log(lastPlayedHTML)
 		});
 		lastPlayedHTML = lastPlayedHTML.replace(new RegExp("selected" , "g"), "");
+		lastPlayedHTML += "by Player " + (playerIndex + 1);
+		$("#lastPlayed").html(lastPlayedHTML);
+		currentGame.lastPlayedHand = selectedCards;
 
+
+		//removeCards from players Hand in object and div
 		currentPlayer.playCards();
-
 		console.log('successfully removed.  ', currentPlayer.hand.cards.length , ' cards left');
-
 		cardsToRemove.remove();
 
-		$('#currentRule').html('doubles');
-		$('#lastPlayed').html(lastPlayedHTML);
+		//Show Current Rule and next player's turn,
+		$("#currentRule").html(selectedCards.getType());
 
-		console.log(thisPlayer.children('.selected').length);
 
-		//move to next player
+		var nextPlayerIndex = playerIndex;
+		(nextPlayerIndex !== 3) ? nextPlayerIndex += 1 : nextPlayerIndex = 0;
+		currentGame.leader = currentGame.players[nextPlayerIndex];
+
+		$("#currentPlayersTurn").html("Player " + (nextPlayerIndex + 1));
+		$(".activePlayer").removeClass("activePlayer");
+		$("#player" + (nextPlayerIndex + 1)).addClass("activePlayer");
 
 	}
 
@@ -432,12 +498,3 @@ $(document).on('click', '.btn.playCards', function() {
 
 
 });
-
-// a.findStartingPlayer();
-
-//wait for player to playCards
-//move to nextPlayer
-
-//if everyone skips, leader stays same, rule is reset;
-
-//if someone beats, reassign leader
