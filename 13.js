@@ -22,7 +22,9 @@ var Card = function (a, b) {
 	else {
 		this.num = a;
 		this.suit = b;
-		this.val = suitValues[b] + ":" + numValues[a];
+		if ((a || b) !== -1) {
+			this.val = suitValues[b] + ":" + numValues[a];
+		}
 	}
 
 	//compareTo checks Number first, then suit.
@@ -232,14 +234,13 @@ var Hand = function(cards) {
 	this.beats = function(b) {
 
 		if (this.isValid() && b.isValid()) {
-			this.getValue();
-			b.getValue();
 
 			if (this.val.type === b.val.type) {
 				var thisCard = this.val.highest;
 				var otherCard = b.val.highest;
 
 				var value = thisCard.compareTo(otherCard);
+				console.log(value)
 
 				return (value === 1);
 			}
@@ -261,19 +262,19 @@ var Hand = function(cards) {
 	}
 };
 
+//Removes selected cards from Players hand and plays them.
+//sets currentGame.Leader to this Player if true.
+//sets currentGame.lastHand to played hand if true.
 Player.prototype.playCards = function() {
 	"use strict";
 	var playersHand = this.hand;
 	var cardsToPlay = new Hand(this.selectedCards);
 
-	//check rule
-	//if selectedCards matches rule, play
-	//else throw error
+	//check rule is valid, matches currentGame.currentRule, and beats lastHand.
 
-	//remove cards from hand
-	if (cardsToPlay.getType() !== null) {
-		cardsToPlay.cards.forEach(function (cardToPlay) {
-			var cardLocation = playersHand.findCard(cardToPlay);
+	if (cardsToPlay.getType() === currentGame.currentRule && cardsToPlay.beats(currentGame.lastPlayedHand)) {
+		cardsToPlay.cards.forEach(function (cardToRemove) {
+			var cardLocation = playersHand.findCard(cardToRemove);
 
 			if (cardLocation !== -1) {
 				playersHand.cards.splice(cardLocation,1);
@@ -281,14 +282,15 @@ Player.prototype.playCards = function() {
 			}
 
 			else {
-				console.log('couldnt find ',cardToPlay.val)
+				console.log('couldnt find ',cardToRemove.val)
 			}
 		});
+
+		this.selectedCards = [];
+		this.isLeader = true;
+		currentGame.lastPlayedHand = cardsToPlay;
 	}
 
-
-	this.selectedCards = [];
-	this.isLeader = true;
 
 
 };
@@ -498,8 +500,15 @@ $(document).on('click', '.btn.playCards', function() {
 	console.log(currentPlayer)
 	var selectedCards = new Hand(currentPlayer.selectedCards);
 
-	console.log(selectedCards.getType())
-	if (selectedCards.getType()) {
+	if (currentGame.lastPlayedHand === null) {
+		var fakeHand = new Hand(currentPlayer.selectedCards);
+		var fakeArray = [];
+		fakeHand.val.highest = new Card(-1,-1);
+	}
+
+	var lastPlayedHand = (currentGame.lastPlayedHand || fakeHand);
+
+	if (selectedCards.getType() === lastPlayedHand.getType() && selectedCards.beats(lastPlayedHand)) {
 		//display cards that were played, and save to currentGame obj
 		var cardsToRemove = thisPlayer.find('.selected');
 		var lastPlayedHTML = "";
@@ -524,7 +533,7 @@ $(document).on('click', '.btn.playCards', function() {
 
 		var nextPlayerIndex = playerIndex;
 		(nextPlayerIndex !== 3) ? nextPlayerIndex += 1 : nextPlayerIndex = 0;
-		currentGame.leader = currentGame.players[nextPlayerIndex];
+		//currentGame.leader = currentGame.players[nextPlayerIndex];
 
 		$("#currentPlayersTurn").html("Player " + (nextPlayerIndex + 1));
 		$(".activePlayer").removeClass("activePlayer");
