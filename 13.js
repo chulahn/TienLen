@@ -15,7 +15,6 @@ var Card = function (a, b) {
 		}
 
 		this.num = numValues.indexOf(thisNum);
-
 		this.suit = suitValues.indexOf(a.slice(0,divide));
 		this.val = a;
 	}
@@ -26,15 +25,16 @@ var Card = function (a, b) {
 		this.val = suitValues[b] + ":" + numValues[a];
 	}
 
+	//compareTo checks Number first, then suit.
 	this.compareTo = function (b) {
-		if (this.suit > b.suit) {
+		if (this.num > b.num) {
 			return 1;
 		}
-		else if (this.suit === b.suit) {
-			if (this.num > b. num) {
+		else if (this.num === b.num) {
+			if (this.suit > b. suit) {
 				return 1;
 			}
-			else if (this.num === b.num) {
+			else if (this.suit === b.suit) {
 				return 0;
 			}
 			else {
@@ -47,7 +47,8 @@ var Card = function (a, b) {
 	}
 
 };
-var startingCard = new Card(0,0);
+
+var threeOfSpades = new Card(0,0);
 
 
 var Player = function() {
@@ -59,7 +60,7 @@ var Player = function() {
 	//onclick Player.selectedCards.push
 };
 
-//Hand object takes in array of Cards
+//Hand object takes in array of Cards, or a single card
 var Hand = function(cards) {
 	if (cards instanceof Card) {
 		var a = [];
@@ -70,20 +71,19 @@ var Hand = function(cards) {
 	//cards is an Array of Card objects
 	this.cards = cards;
 	this.sortedCards = cards.slice().sort(function (a,b) {
-
 		if (a.num === b.num) {
 			return (a.suit - b.suit);
 		}
-
 		else {
 			return (a.num - b.num);
 		}
 	});
-	//searches hand for a card that matches cardToFind's value
+
+	//Returns index of the Card if in Hand, else -1
+	//goes thru hand to find a card that matches cardToFind's value
 	this.findCard = function(cardToFind) {
 		for (var i=0; i<this.cards.length; i++) {
 			var currentCard = this.cards[i];
-			//didn't reach the end
 			if (i !== this.cards.length-1) {
 				if (currentCard.val === cardToFind.val) {
 					return i;
@@ -151,7 +151,9 @@ var Hand = function(cards) {
 		}
 	};
 
-
+	//Returns type for a Hand, (Single, Double, Straight 3, Straight 4) or nothing if not valid.
+	//Checks length, and then checks if all cards have the same number.
+	//If not all tnumber are the same, check if they increase by one.
 	this.getType = function() {
 		var sortedCards = this.sortedCards;
 		if (sortedCards.length === 1) {
@@ -165,7 +167,6 @@ var Hand = function(cards) {
 				}
 
 				if (sortedCards.length === 2) {
-
 					if (currentCard.num === nextCard.num) {
 						return "Doubles";
 					}
@@ -176,7 +177,7 @@ var Hand = function(cards) {
 				}
 
 				else if (sortedCards.length > 2) {
-					//check doubles, triples, 4ofakind
+					//triples, 4ofakind
 					var numToMatch = currentCard.num;
 					if (i===0) {
 						var allCardsMatch = sortedCards.every(function(card) {
@@ -184,7 +185,12 @@ var Hand = function(cards) {
 						});
 
 						if (allCardsMatch) {
-							return "Triples";
+							if (sortedCards.length === 3) {
+								return "Triples";
+							}
+							else if (sortedCards.length === 4) {
+								return "Bomb";
+							}
 						}
 					}
 
@@ -205,6 +211,7 @@ var Hand = function(cards) {
 		}
 	}
 
+	//If Hand is Valid, gets Value, by getting Type and highest Card
 	this.getValue = function() {
 		var cards = this.sortedCards;
 		var handVal = this.val = {};
@@ -219,22 +226,30 @@ var Hand = function(cards) {
 	}
 	this.getValue();
 
-	//checks if hand is valid, and if it is beter
+	//If a Hand beats another Hand, returns true.
+	//Checks if both Hands are valid and same Type.
+	//then compares values of both cards.
 	this.beats = function(b) {
 
-		if (this.isValid()) {
-			var thisCard = this.val.highest;
-			var otherCard = b.val.highest;
+		if (this.isValid() && b.isValid()) {
+			this.getValue();
+			b.getValue();
 
-			var value = thisCard.compareTo(otherCard);
+			if (this.val.type === b.val.type) {
+				var thisCard = this.val.highest;
+				var otherCard = b.val.highest;
 
-			return (value === 1);
+				var value = thisCard.compareTo(otherCard);
+
+				return (value === 1);
+			}
 		}
 
 
 
 	}
 
+	//CHecks if Hand follows current rule.
 	this.followsRule = function() {
 		if (currentGame.currentRule !== "Start") {
 			return (this.getType() === currentGame.currentRule) && (this.beatsHand(currentGame.lastPlayedHand));
@@ -344,7 +359,7 @@ var Game = function() {
 			for (var j=0; j<currentPlayer.hand.cards.length; j++) {
 				var currentCard = currentPlayer.hand.cards[j];
 
-				if (currentCard.val === startingCard.val) {
+				if (currentCard.val === threeOfSpades.val) {
 					var playerNumber = (i+1);
 					$('#currentPlayersTurn').html("Player " + playerNumber);
 					$("#player" + playerNumber).addClass("activePlayer");
@@ -352,7 +367,7 @@ var Game = function() {
 
 					this.leader = currentPlayer;
 					this.currentRule = "Start";
-					currentPlayer.selectedCards.push(startingCard);
+					currentPlayer.selectedCards.push(threeOfSpades);
 					return currentPlayer;
 				}
 			}
