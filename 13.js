@@ -218,13 +218,11 @@ var Hand = function(cards) {
 		var cards = this.sortedCards;
 		var handVal = this.val = {};
 		//if hand is valid then return
-		console.log(this)
 		if (this.getType()) {
 			handVal.type = this.getType();
 			handVal.highest = cards[cards.length-1];
 			return handVal;
 		}
-
 	}
 	this.getValue();
 
@@ -240,8 +238,6 @@ var Hand = function(cards) {
 				var otherCard = b.val.highest;
 
 				var value = thisCard.compareTo(otherCard);
-				console.log(value)
-
 				return (value === 1);
 			}
 		}
@@ -253,11 +249,18 @@ var Hand = function(cards) {
 	//CHecks if Hand follows current rule.
 	this.followsRule = function() {
 		if (currentGame.currentRule !== "Start") {
-			return (this.getType() === currentGame.currentRule) && (this.beatsHand(currentGame.lastPlayedHand));
+			return (this.getType() === currentGame.currentRule);
 		}
 
 		else {
-			return this.isValid();
+			var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
+
+			if (!(containsThreeOfSpades)) {
+				alert("Must have 3 of Spades in Starting Hand");
+			}
+
+			
+			return this.isValid() && containsThreeOfSpades;
 		}
 	}
 };
@@ -269,10 +272,20 @@ Player.prototype.playCards = function() {
 	"use strict";
 	var playersHand = this.hand;
 	var cardsToPlay = new Hand(this.selectedCards);
+	var cg = currentGame;
+
+	//repeated Code just in case
+	if (cg.lastPlayedHand === null) {
+		var fakeHand = new Hand(this.selectedCards);
+		var fakeArray = [];
+		fakeHand.val.highest = new Card(-1,-1);
+		cg.lastPlayedHand = fakeHand;
+	}
+
 
 	//check rule is valid, matches currentGame.currentRule, and beats lastHand.
-
-	if (cardsToPlay.getType() === currentGame.currentRule && cardsToPlay.beats(currentGame.lastPlayedHand)) {
+	if (cardsToPlay.followsRule() && cardsToPlay.beats(cg.lastPlayedHand)) {
+		console.log('beats rule')
 		cardsToPlay.cards.forEach(function (cardToRemove) {
 			var cardLocation = playersHand.findCard(cardToRemove);
 
@@ -288,7 +301,16 @@ Player.prototype.playCards = function() {
 
 		this.selectedCards = [];
 		this.isLeader = true;
-		currentGame.lastPlayedHand = cardsToPlay;
+		cg.lastPlayedHand = cardsToPlay;
+
+
+		//set currentPlayer and leader indexes
+		var l = cg.leader = cg.players.indexOf(this);
+		(l !== 3) ? cg.currentPlayer = l + 1 : cg.currentPlayer = 0;
+		cg.turnData = [0,0,0,0];
+		cg.turnData[l] = "L";
+			
+
 	}
 
 
@@ -303,8 +325,13 @@ var Game = function() {
 	this.deck = [];
 	this.players = [];
 	this.currentRule = "Start";
-	this.leader = null;
+
+	this.leader = -1;
+	this.currentPlayer = -1;
+
 	this.lastPlayedHand = null;
+	
+	this.turnData = [0,0,0,0];
 
 
 	this.createDeck = function() {
@@ -367,7 +394,8 @@ var Game = function() {
 					$("#player" + playerNumber).addClass("activePlayer");
 					$(".card[alt='Spade:3']").addClass("selected");
 
-					this.leader = currentPlayer;
+					this.currentPlayer = i;
+					this.turnData[i] = "S";
 					this.currentRule = "Start";
 					currentPlayer.selectedCards.push(threeOfSpades);
 					return currentPlayer;
@@ -491,25 +519,29 @@ $(document).on('click', '.card', function() {
 $(document).on('click', '.btn.playCards', function() {
 
 	"use strict";
+	var cg = currentGame;
+
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
 	playerIndex = playerIndex.slice(playerIndex.length-1);
 	playerIndex = parseInt(playerIndex) - 1;
 
-	var currentPlayer = currentGame.players[playerIndex];
-	console.log(currentPlayer)
-	var selectedCards = new Hand(currentPlayer.selectedCards);
+	var thisPlayerObj = cg.players[playerIndex];
+	var selectedCards = new Hand(thisPlayerObj.selectedCards);
+	console.log(thisPlayerObj)
 
-	if (currentGame.lastPlayedHand === null) {
-		var fakeHand = new Hand(currentPlayer.selectedCards);
+	if (cg.lastPlayedHand === null) {
+		var fakeHand = new Hand(thisPlayerObj.selectedCards);
 		var fakeArray = [];
 		fakeHand.val.highest = new Card(-1,-1);
+		cg.lastPlayedHand = fakeHand;
 	}
 
-	var lastPlayedHand = (currentGame.lastPlayedHand || fakeHand);
+	var lastPlayedHand = (cg.lastPlayedHand || fakeHand);
 
-	if (selectedCards.getType() === lastPlayedHand.getType() && selectedCards.beats(lastPlayedHand)) {
-		//display cards that were played, and save to currentGame obj
+	if (selectedCards.followsRule() && selectedCards.beats(lastPlayedHand)) {
+
+		//save cards that were played in global Game object, and display them in #lastPlayed
 		var cardsToRemove = thisPlayer.find('.selected');
 		var lastPlayedHTML = "";
 		cardsToRemove.each(function() {
@@ -518,34 +550,39 @@ $(document).on('click', '.btn.playCards', function() {
 		lastPlayedHTML = lastPlayedHTML.replace(new RegExp("selected" , "g"), "");
 		lastPlayedHTML += "by Player " + (playerIndex + 1);
 		$("#lastPlayed").html(lastPlayedHTML);
-		currentGame.lastPlayedHand = selectedCards;
 
 
-		//removeCards from players Hand in object and div
-		currentPlayer.playCards();
-		console.log('successfully removed.  ', currentPlayer.hand.cards.length , ' cards left');
+		//remove cards from player's Hand object and player's div
+		thisPlayerObj.playCards();
+		console.log('successfully removed.  ', thisPlayerObj.hand.cards.length , ' cards left');
 		cardsToRemove.remove();
 
-		//Show Current Rule and next player's turn,
-		$("#currentRule").html(selectedCards.getType());
-		currentGame.currentRule = selectedCards.getType();
+		//Show Current Rule, highlight next Player, change currentPlayer Text
+		cg.currentRule = selectedCards.getType();
+		$("#currentRule").html(cg.currentRule);
 
-
-		var nextPlayerIndex = playerIndex;
-		(nextPlayerIndex !== 3) ? nextPlayerIndex += 1 : nextPlayerIndex = 0;
-		//currentGame.leader = currentGame.players[nextPlayerIndex];
-
-		$("#currentPlayersTurn").html("Player " + (nextPlayerIndex + 1));
 		$(".activePlayer").removeClass("activePlayer");
-		$("#player" + (nextPlayerIndex + 1)).addClass("activePlayer");
+		console.log(cg.currentPlayer)
+		$("#player" + (cg.currentPlayer + 1)).addClass("activePlayer");
+
+		$("#currentPlayersTurn").html("Player " + (cg.currentPlayer + 1));
 
 	}
 
 	else {
 		console.log('cannot play these cards');
 	}
+});
 
+$(document).on('click', '.btn.skipTurn', function() {
+	"use strict";
 
+	var thisPlayer = $(this).closest('.player');
+	var playerIndex = thisPlayer.attr('id');
+	playerIndex = playerIndex.slice(playerIndex.length-1);
+	playerIndex -= 1;
 
+	currentGame.turnData[playerIndex] = "P";
+	currentGame.playerIndex += 1;
 
 });
