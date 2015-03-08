@@ -2,6 +2,40 @@ String.prototype.getLastChar = function() {
 	return this.slice(this.length-1);
 }
 
+
+
+Array.prototype.addRemoveCard = function(clickedCard) {
+
+	var thisArray = this;
+
+	var validHandArray = thisArray.every(function(element) {
+		return (typeof element === "object") && element.hasOwnProperty("num") && element.hasOwnProperty("suit") && (thisArray.length > 0)
+	
+	});
+
+	if (validHandArray) {
+		for (var i=0; i<thisArray.length; i++) {
+			var currentCard = thisArray[i];
+			//if already in, remove
+			if (typeof currentCard === "object" && currentCard.val === clickedCard.val) {
+				thisArray.splice(i,1);
+				break;
+			}
+
+			//if reached the end, and it wasnt already removed, add
+			if (i === thisArray.length-1) {
+				thisArray.push(clickedCard);
+				break;
+			}
+		}
+	}
+
+	else {
+		alert("every element in array is not a Card or length=0")
+	}
+
+}
+
 $(document).ready(function() {
 	"use strict";
 	currentGame = new Game();
@@ -19,14 +53,13 @@ $(document).on('click', '.card', function() {
 	clickedCard.toggleClass('selected');
 	console.log('clicked on card ', clickedCard.attr('alt'));
 
-
 	//get player
 	var selectedPlayer = clickedCard.parent().attr('id');
-	var playerNum = selectedPlayer.getLastChar();
-	playerNum -= 1;
+	var playerNum = selectedPlayer.getLastChar() - 1;
 	selectedPlayer = currentGame.players[playerNum];
 
-	//see if clicked card is already selected.  add/remove
+	//see if clicked card is already selected.
+	//Then add/remove
 	var selectedCards = selectedPlayer.selectedCards;
 	clickedCard = new Card(clickedCard.attr('alt'));
 
@@ -35,23 +68,8 @@ $(document).on('click', '.card', function() {
 	}
 
 	else {
-		for (var i=0; i< selectedCards.length; i++) {
-			var currentCard = selectedCards[i];
-			//if already in, remove
-			if (typeof currentCard === "object" && currentCard.val === clickedCard.val) {
-				selectedCards.splice(i,1);
-				break;
-			}
-
-			//if reached the end, and it wasnt already removed, add
-			if (i === selectedCards.length-1) {
-				selectedCards.push(clickedCard);
-				break;
-			}
-		}
+		selectedCards.addRemoveCard(clickedCard);
 	}
-
-
 
 });
 
@@ -62,8 +80,7 @@ $(document).on('click', '.btn.playCards', function() {
 
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
-	playerIndex = playerIndex.getLastChar();
-	playerIndex = parseInt(playerIndex) - 1;
+	playerIndex = playerIndex.getLastChar() - 1;
 
 	var thisPlayerObj = cg.players[playerIndex];
 	var selectedCards = new Hand(thisPlayerObj.selectedCards);
