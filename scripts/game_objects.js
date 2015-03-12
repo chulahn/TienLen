@@ -11,7 +11,6 @@ var Card = function (a, b) {
 
 		var thisSuit = a.slice(divide+1);
 		var thisNum = a.slice(0,divide);
-		console.log(thisNum)
 		if (!(isNaN(parseInt(thisNum)))) {
 			thisNum = parseInt(thisNum);
 		}
@@ -72,13 +71,14 @@ Player.prototype.playCards = function() {
 	//repeated Code just in case
 	if (cg.lastPlayedHand === null) {
 		var fakeHand = new Hand(this.selectedCards);
-		var fakeArray = [];
 		fakeHand.val.highest = new Card(-1,-1);
 		cg.lastPlayedHand = fakeHand;
 	}
 
 
 	//check rule is valid, matches currentGame.currentRule, and beats lastHand.
+	//reset selected cards, re-sort cards
+	//set currentGame data(turnData, leader, and lastPlayed Hand)
 	if (cardsToPlay.followsRule() && cardsToPlay.beats(cg.lastPlayedHand)) {
 		console.log('beats rule')
 		cardsToPlay.cards.forEach(function (cardToRemove) {
@@ -86,7 +86,6 @@ Player.prototype.playCards = function() {
 
 			if (cardLocation !== -1) {
 				playersHand.cards.splice(cardLocation,1);
-				playersHand = new Hand(playersHand.cards);
 			}
 
 			else {
@@ -95,17 +94,28 @@ Player.prototype.playCards = function() {
 		});
 
 		this.selectedCards = [];
-		this.isLeader = true;
-		cg.lastPlayedHand = cardsToPlay;
+		playersHand.sortedCards = playersHand.cards.slice().sort(function (a,b) {
+			if (a.num === b.num) {
+				return (a.suit - b.suit);
+			}
+			else {
+				return (a.num - b.num);
+			}
+		});
 
+
+		//update sorted cards
+		cg.lastPlayedHand = cardsToPlay;
+		if (playersHand.cards.length === 0) {
+			//call game over function.  player 1
+			alert('Player ' , cg.players.indexOf(this) , 'is the winner');
+		}
 
 		//set currentPlayer and leader indexes
 		var l = cg.leader = cg.players.indexOf(this);
 		(l !== 3) ? cg.currentPlayer = l + 1 : cg.currentPlayer = 0;
 		cg.turnData = [0,0,0,0];
 		cg.turnData[l] = "L";
-			
-
 	}
 };
 
@@ -250,19 +260,28 @@ Hand.prototype.beats = function(b) {
 
 //CHecks if Hand follows current rule.
 Hand.prototype.followsRule = function() {
-	if (currentGame.currentRule !== "Start") {
+
+	var cr = currentGame.currentRule;
+
+	if (cr !== "Start" && cr !== "None") {
 		return (this.val.type === currentGame.currentRule);
 	}
 
 	else {
-		var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
+		if (cr === "Start") {
+			var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
 
-		if (!(containsThreeOfSpades)) {
-			alert("Must have 3 of Spades in Starting Hand");
+			if (!(containsThreeOfSpades)) {
+				alert("Must have 3 of Spades in Starting Hand");
+			}
+
+			
+			return this.isValid() && containsThreeOfSpades;
 		}
 
-		
-		return this.isValid() && containsThreeOfSpades;
+		else if (cr === "None") {
+			return this.isValid();
+		}
 	}
 }
 
@@ -413,3 +432,23 @@ Game.prototype.displayCards = function() {
 
 	}
 };
+
+Game.prototype.setTurnData = function(action, playerInd) {
+	if (action === "Leader") {
+		this.turnData = [0,0,0,0];
+	}
+	this.turnData[playerInd] = action;
+}
+
+Game.prototype.checkTurnData = function() {
+	if (this.turnData.indexOf(0) === -1) {
+		var leader = this.turnData.indexOf("Leader");
+		this.turnData = [0,0,0,0];
+		this.turnData[leader] = ["Start"];
+		alert("New Turn.  Player " + (leader+1) + " starts");
+		currentGame.currentRule = "None";
+		currentGame.lastPlayedHand = null;
+		$('#currentRule').html("None");
+		$('#lastPlayed').html("");
+	}
+}

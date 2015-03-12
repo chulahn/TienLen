@@ -2,15 +2,17 @@ String.prototype.getLastChar = function() {
 	return this.slice(this.length-1);
 }
 
-
-
 Array.prototype.addRemoveCard = function(clickedCard) {
 
 	var thisArray = this;
 
+	if (thisArray.length === 0) {
+		thisArray.push(clickedCard);
+		return;
+	}
+
 	var validHandArray = thisArray.every(function(element) {
 		return (typeof element === "object") && element.hasOwnProperty("num") && element.hasOwnProperty("suit") && (thisArray.length > 0)
-	
 	});
 
 	if (validHandArray) {
@@ -62,15 +64,7 @@ $(document).on('click', '.card', function() {
 	//Then add/remove
 	var selectedCards = selectedPlayer.selectedCards;
 	clickedCard = new Card(clickedCard.attr('alt'));
-
-	if (selectedCards.length === 0) {
-		selectedCards.push(clickedCard);
-	}
-
-	else {
-		selectedCards.addRemoveCard(clickedCard);
-	}
-
+	selectedCards.addRemoveCard(clickedCard);
 });
 
 $(document).on('click', '.btn.playCards', function() {
@@ -84,11 +78,10 @@ $(document).on('click', '.btn.playCards', function() {
 
 	var thisPlayerObj = cg.players[playerIndex];
 	var selectedCards = new Hand(thisPlayerObj.selectedCards);
-	console.log(thisPlayerObj)
 
+	//for first move
 	if (cg.lastPlayedHand === null) {
 		var fakeHand = new Hand(thisPlayerObj.selectedCards);
-		var fakeArray = [];
 		fakeHand.val.highest = new Card(-1,-1);
 		cg.lastPlayedHand = fakeHand;
 	}
@@ -117,6 +110,9 @@ $(document).on('click', '.btn.playCards', function() {
 		cg.currentRule = selectedCards.getType();
 		$("#currentRule").html(cg.currentRule);
 
+
+		cg.setTurnData("Leader" , playerIndex);
+
 		highlightNextPlayer();
 	}
 
@@ -130,12 +126,11 @@ $(document).on('click', '.btn.skipTurn', function() {
 
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
-	playerIndex = playerIndex.slice(playerIndex.length-1);
-	playerIndex -= 1;
+	playerIndex = playerIndex.slice(playerIndex.length-1) - 1;
 
-	currentGame.turnData[playerIndex] = "P";
-	currentGame.playerIndex += 1;
-
+	currentGame.setTurnData("Pass", playerIndex);
+	highlightNextPlayer();
+	currentGame.checkTurnData();
 	
 
 });
@@ -150,5 +145,6 @@ function highlightNextPlayer() {
 	$('.activePlayer').removeClass('activePlayer');
 
 	$('#player' + nextPlayer).addClass('activePlayer');
+	$('#currentPlayersTurn').html('Player ' + nextPlayer);
 
 }
