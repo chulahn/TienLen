@@ -7,15 +7,10 @@
 	<script src="scripts/game_objects.js"></script>
 	<script src="scripts/gameplay.js"></script>
 
-	<link rel="stylesheet" href="style.less">
+	<link rel="stylesheet" href="/style/style.css">
 
-	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-
-	<!-- Optional theme -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
-
-	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
 </head>
 <body>
@@ -41,6 +36,10 @@
 		<h2>This is player 4s cards<span class="btn btn-primary playCards">Play Cards</span><span class="btn btn-success skipTurn">Skip Turn</span></h2>
 	</div>
 
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+	  var socket = io();
+	</script>
 
 </body>
 </html>

@@ -45,3 +45,5 @@ Temporary Items
 .idea
 *.css
 card_icons.png
+/node_modules
+npm-debug.log

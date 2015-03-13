@@ -414,7 +414,7 @@ Game.prototype.displayCards = function() {
 					break;
 			}
 
-			iconHTML += "' src='img_trans.gif'></img>";
+			iconHTML += "' src='/images/img_trans.gif'></img>";
 			cardHTML += iconHTML;
 
 			cardHTML += "</div>";
