@@ -35,8 +35,11 @@ Array.prototype.addRemoveCard = function(clickedCard) {
 	else {
 		alert("every element in array is not a Card or length=0")
 	}
-
 }
+
+var socket = io.connect('http://localhost');
+
+
 
 $(document).ready(function() {
 	"use strict";
@@ -55,6 +58,8 @@ $(document).on('click', '.card', function() {
 	clickedCard.toggleClass('selected');
 	console.log('clicked on card ', clickedCard.attr('alt'));
 
+	socket.emit('clickedCard', {data: clickedCard.attr('alt')});
+
 	//get player
 	var selectedPlayer = clickedCard.parent().attr('id');
 	var playerNum = selectedPlayer.getLastChar() - 1;
@@ -65,6 +70,9 @@ $(document).on('click', '.card', function() {
 	var selectedCards = selectedPlayer.selectedCards;
 	clickedCard = new Card(clickedCard.attr('alt'));
 	selectedCards.addRemoveCard(clickedCard);
+
+
+
 });
 
 $(document).on('click', '.btn.playCards', function() {
