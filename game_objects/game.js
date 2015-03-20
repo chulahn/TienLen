@@ -3,6 +3,10 @@ var Hand = require('./hand.js');
 var Player = require('./player.js');
 var server = require('../app.js');
 
+
+var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
+var threeOfSpades = new Card(0,0);
+
 var Game = function(players) {
 
 	"use strict";
@@ -38,7 +42,7 @@ Game.prototype.createPlayers = function(players) {
 	this.players = [];
 
 	for (var i=0; i<4; i++) {
-		console.log('adding player ' + players[i]);
+		console.log('adding player ' + players[i].num + ":" + players[i].id);
 		var newPlayer = new Player(players[i]);
 		this.players.push(newPlayer);
 	}
@@ -65,6 +69,7 @@ Game.prototype.dealCards = function() {
 		}
 	}
 	console.log('dealt all cards');
+	this.findStartingPlayer();
 };
 
 Game.prototype.initialize = function(players) {
@@ -74,7 +79,7 @@ Game.prototype.initialize = function(players) {
 };
 
 Game.prototype.findStartingPlayer = function() {
-
+	console.log("looking for starting player");
 	for (var i=0; i< this.players.length; i++) {
 		var currentPlayer = this.players[i];
 
@@ -83,32 +88,36 @@ Game.prototype.findStartingPlayer = function() {
 
 			if (currentCard.val === threeOfSpades.val) {
 				var playerNumber = (i+1);
-				$('#currentPlayersTurn').html("Player " + playerNumber);
-				$("#player" + playerNumber).addClass("activePlayer");
-				$(".card[alt='3:Spade']").addClass("selected");
+				console.log('found starting player ' + playerNumber);
+				server.io.emit('foundStartingPlayer', playerNumber);
 
 				this.currentPlayer = i;
 				this.turnData[i] = "S";
 				this.currentRule = "Start";
-				currentPlayer.selectedCards.push(threeOfSpades);
+
 				return currentPlayer;
 			}
 		}
 	}
+	this.displayCards();
 };
 
 Game.prototype.displayCards = function() {
+
+	var display = [];
+	console.log('display Cards')
 
 	for (var i=0; i<this.players.length ; i++) {
 
 		var currentPlayer = this.players[i];
 		var currentPlayersHand = currentPlayer.hand.cards;
+		var cardHTML = "";
 
 		for (var j=0; j< currentPlayersHand.length; j++) {
 
 			var currentCard = currentPlayersHand[j];
 
-			var cardHTML = "<div class='card panel-primary' alt='";
+			cardHTML += "<div class='card panel-primary' alt='";
 			cardHTML += currentCard.val;
 			cardHTML += "'>";
 
@@ -133,23 +142,30 @@ Game.prototype.displayCards = function() {
 					iconHTML += "heart";
 					break;
 			}
-
 			iconHTML += "' src='/images/img_trans.gif'></img>";
 			cardHTML += iconHTML;
 
 			cardHTML += "</div>";
-
 			cardHTML += "<div class ='panel-body'>";
-
-
 			cardHTML += "</div>";
 			cardHTML += "</div>";
 
-			var selector = "#player" + (i+1);
-			$("#player" + (i + 1) + "").append(cardHTML);
 		}
+		var obj = {};
+		obj.selecter = "#player" + (i+1);
+		obj.html = cardHTML;
+		display.push(obj);
+	}
 
+	console.log('finished loop' , display.length)
 
+	if (display.length === 4) {
+		console.log('emit displayCards');
+		for (var j=0; j<server.io.sockets.sockets.length; j++) {
+			var currentPlayer = server.io.sockets.sockets[j];
+
+			server.io.to(currentPlayer.id).emit('displayCards', {cards:display ,playerNum : j});
+		};
 	}
 };
 

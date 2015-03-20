@@ -37,16 +37,40 @@ Array.prototype.addRemoveCard = function(clickedCard) {
 	}
 }
 
-var socket = io.connect('http://localhost');
+var socket = io.connect('http://localhost:3000');
 
+socket.on('connect' , function() {
+	console.log(socket.id)
 
+	socket.on('foundStartingPlayer', function(data) {
+		console.log(data)
+		console.log('player ' + data + ' starts');
+
+		$('#currentPlayersTurn').html("Player " + data);
+		$("#player" + data).addClass("activePlayer");		
+	});
+
+	socket.on('displayCards', function(data) {
+		console.log('displaying cards');
+		//show all cards
+		for (var i =0; i< data.cards.length; i++) {
+			var curr = data.cards[i];
+			$('' + curr.selecter).append(curr.html)
+		}
+		console.log(data.playerNum)
+		
+		$('.card').addClass('other');
+		$('#player' + (data.playerNum+1) +' .card').removeClass('other');
+	});
+
+});
 
 $(document).ready(function() {
 	"use strict";
 	currentGame = new Game();
 	currentGame.initialize();
-	currentGame.displayCards();
-	currentGame.findStartingPlayer();
+	// currentGame.displayCards();
+	// currentGame.findStartingPlayer();
 
 });
 

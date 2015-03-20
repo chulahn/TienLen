@@ -1,8 +1,9 @@
-var server = require('../app.js')
+var server = require('../app.js');
 
-var Player = function(id) {
+var Player = function(obj) {
 	"use strict";
-	this.id = id;
+	this.id = obj.id;
+	this.num = obj.num;
 	this.hand = [];
 	this.selectedCards = [];
 	this.isLeader = false;
