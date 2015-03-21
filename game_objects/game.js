@@ -69,7 +69,7 @@ Game.prototype.dealCards = function() {
 		}
 	}
 	console.log('dealt all cards');
-	this.findStartingPlayer();
+	// this.findStartingPlayer();
 };
 
 Game.prototype.initialize = function(players) {
@@ -99,7 +99,6 @@ Game.prototype.findStartingPlayer = function() {
 			}
 		}
 	}
-	this.displayCards();
 };
 
 Game.prototype.displayCards = function() {

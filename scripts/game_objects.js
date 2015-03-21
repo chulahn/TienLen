@@ -52,11 +52,14 @@ Card.prototype.compareTo = function (b) {
 var threeOfSpades = new Card(0,0);
 
 
-var Player = function() {
+var Player = function(obj) {
 	"use strict";
-	this.hand = [];
-	this.selectedCards = [];
-	this.isLeader = false;
+
+	this.id = obj.id;
+	this.num = obj.num;
+	this.hand = obj.hand;
+	this.selectedCards = obj.selectedCards;
+	this.isLeader = obj.isLeader;
 }
 
 //Removes selected cards from Players hand and plays them.
@@ -66,7 +69,7 @@ Player.prototype.playCards = function() {
 	"use strict";
 	var playersHand = this.hand;
 	var cardsToPlay = new Hand(this.selectedCards);
-	var cg = currentGame;
+	// var cg = currentGame;
 
 	//repeated Code just in case
 	if (cg.lastPlayedHand === null) {
@@ -124,12 +127,14 @@ Player.prototype.playCards = function() {
 var Hand = function(cards) {
 	"use strict";
 	if (cards instanceof Card) {
+		console.log('here')
 		var a = [];
 		a.push(cards);
 		cards = a;
 	}
 	//cards is an Array of Card objects
 	this.cards = cards;
+	console.log(cards)
 	this.sortedCards = cards.slice().sort(function (a,b) {
 		if (a.num === b.num) {
 			return (a.suit - b.suit);
@@ -261,7 +266,9 @@ Hand.prototype.beats = function(b) {
 //CHecks if Hand follows current rule.
 Hand.prototype.followsRule = function() {
 
-	var cr = currentGame.currentRule;
+	// var cr = currentRule;
+	var cr = cg.currentRule;
+	console.log(cr);
 
 	if (cr !== "Start" && cr !== "None") {
 		return (this.val.type === currentGame.currentRule);
