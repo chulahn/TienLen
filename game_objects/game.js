@@ -24,6 +24,14 @@ var Game = function(players) {
 	this.initialize(players);
 }
 
+Game.prototype.findPlayerIndex = function(player) {
+	for (var i=0; i<this.players.length; i++) {
+		if (this.players[i].id === player.id) {
+			console.log('index ' + i);
+			return i;
+		}
+	}
+}
 
 Game.prototype.createDeck = function() {
 

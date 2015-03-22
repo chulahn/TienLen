@@ -3,6 +3,7 @@
 var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
 var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
 var currentGame;
+var socket = io.connect('http://localhost:3000');
 
 var Card = function (a, b) {
 	"use strict";
@@ -51,15 +52,13 @@ Card.prototype.compareTo = function (b) {
 
 var threeOfSpades = new Card(0,0);
 
-
+//Copy constructor, so new object will have prototype methods
 var Player = function(obj) {
 	"use strict";
-
 	this.id = obj.id;
 	this.num = obj.num;
-	this.hand = obj.hand;
+	this.hand = new Hand(obj.hand);
 	this.selectedCards = obj.selectedCards;
-	this.isLeader = obj.isLeader;
 }
 
 //Removes selected cards from Players hand and plays them.
@@ -69,21 +68,23 @@ Player.prototype.playCards = function() {
 	"use strict";
 	var playersHand = this.hand;
 	var cardsToPlay = new Hand(this.selectedCards);
-	// var cg = currentGame;
 
 	//repeated Code just in case
-	if (cg.lastPlayedHand === null) {
+	if (localGame.lastPlayedHand === null) {
 		var fakeHand = new Hand(this.selectedCards);
 		fakeHand.val.highest = new Card(-1,-1);
-		cg.lastPlayedHand = fakeHand;
+		localGame.lastPlayedHand = fakeHand;
 	}
 
 
 	//check rule is valid, matches currentGame.currentRule, and beats lastHand.
-	//reset selected cards, re-sort cards
-	//set currentGame data(turnData, leader, and lastPlayed Hand)
-	if (cardsToPlay.followsRule() && cardsToPlay.beats(cg.lastPlayedHand)) {
+
+	//set currentGame data(turnData, leader)
+	//update to other players
+	if (cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
 		console.log('beats rule')
+
+		//Update's Local Player's selectedCards, removes Cards and resorts.  Then updates Serve's game data
 		cardsToPlay.cards.forEach(function (cardToRemove) {
 			var cardLocation = playersHand.findCard(cardToRemove);
 
@@ -95,7 +96,6 @@ Player.prototype.playCards = function() {
 				console.log('couldnt find ',cardToRemove.val)
 			}
 		});
-
 		this.selectedCards = [];
 		playersHand.sortedCards = playersHand.cards.slice().sort(function (a,b) {
 			if (a.num === b.num) {
@@ -105,45 +105,65 @@ Player.prototype.playCards = function() {
 				return (a.num - b.num);
 			}
 		});
+		socket.emit('updatePlayer', this);
+
+		//Update local and server's lastPlayedHand
+		localGame.lastPlayedHand = cardsToPlay;
+		socket.emit('updateLastPlayedHand', localGame.lastPlayedHand);
 
 
-		//update sorted cards
-		cg.lastPlayedHand = cardsToPlay;
+		//Show Current Rule, highlight next Player, change currentPlayer Text
+
 		if (playersHand.cards.length === 0) {
 			//call game over function.  player 1
-			alert('Player ' , cg.players.indexOf(this) , 'is the winner');
+			alert('Player ' , localGame.players.indexOf(this) , 'is the winner');
 		}
 
 		//set currentPlayer and leader indexes
-		var l = cg.leader = cg.players.indexOf(this);
-		(l !== 3) ? cg.currentPlayer = l + 1 : cg.currentPlayer = 0;
-		cg.turnData = [0,0,0,0];
-		cg.turnData[l] = "L";
+		var l = localGame.leader = localGame.players.indexOf(this);
+		(l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
+		localGame.turnData = [0,0,0,0];
+		localGame.turnData[l] = "L";
 	}
 };
 
 
-//Hand object takes in array of Cards, or a single card, and organizes
+//Hand object takes in array of Cards, or a single card
+//and sorts, and gets value of Hand.  Called when playing a Hand
 var Hand = function(cards) {
 	"use strict";
-	if (cards instanceof Card) {
-		console.log('here')
-		var a = [];
-		a.push(cards);
-		cards = a;
+	// if (cards instanceof Card) {
+	// 	console.log('here')
+	// 	var a = [];
+	// 	a.push(cards);
+	// 	cards = a;
+	// }
+
+	if (cards == null) {
+		return null;
 	}
-	//cards is an Array of Card objects
-	this.cards = cards;
-	console.log(cards)
-	this.sortedCards = cards.slice().sort(function (a,b) {
-		if (a.num === b.num) {
-			return (a.suit - b.suit);
-		}
-		else {
-			return (a.num - b.num);
-		}
-	});
-	this.getValue();
+
+	if ((cards instanceof Array) === true) {
+		//cards is an Array of Card objects
+		this.cards = cards;
+		this.sortedCards = cards.slice().sort(function (a,b) {
+			if (a.num === b.num) {
+				return (a.suit - b.suit);
+			}
+			else {
+				return (a.num - b.num);
+			}
+		});
+		this.getValue();
+	}
+
+	else {
+		var oldHand = cards;
+		this.cards = oldHand.cards;
+		this.sortedCards = oldHand.sortedCards;
+		this.val = oldHand.val;
+	}
+
 }
 
 //Returns index of the Card if in Hand, else -1
@@ -267,11 +287,11 @@ Hand.prototype.beats = function(b) {
 Hand.prototype.followsRule = function() {
 
 	// var cr = currentRule;
-	var cr = cg.currentRule;
+	var cr = localGame.currentRule;
 	console.log(cr);
 
 	if (cr !== "Start" && cr !== "None") {
-		return (this.val.type === currentGame.currentRule);
+		return (this.val.type === localGame.currentRule);
 	}
 
 	else {
@@ -296,21 +316,25 @@ Hand.prototype.followsRule = function() {
 
 
 
-var Game = function() {
+var Game = function(oldGame) {
 
 	"use strict";
-	this.deck = [];
-	this.players = [];
-	this.currentRule = "Start";
+	this.deck = oldGame.deck;
 
-	this.leader = -1;
-	this.currentPlayer = -1;
+	var newPlayerArray = [];
+	for (var i=0; i<oldGame.players.length; i++) {
+		var newPlayer = new Player(oldGame.players[i]);
+		newPlayerArray.push(newPlayer);
+	}
+	this.players = newPlayerArray;
 
-	this.lastPlayedHand = null;
+	this.currentRule = oldGame.currentRule;
+	this.leader = oldGame.leader;
+	this.currentPlayer = oldGame.currentPlayer;
+
+	this.lastPlayedHand = new Hand(oldGame.lastPlayedHand);
 	
-	this.turnData = [0,0,0,0];
-
-
+	this.turnData = oldGame.turnData;
 }
 
 
@@ -453,8 +477,8 @@ Game.prototype.checkTurnData = function() {
 		this.turnData = [0,0,0,0];
 		this.turnData[leader] = ["Start"];
 		alert("New Turn.  Player " + (leader+1) + " starts");
-		currentGame.currentRule = "None";
-		currentGame.lastPlayedHand = null;
+		localGame.currentRule = "None";
+		localGame.lastPlayedHand = null;
 		$('#currentRule').html("None");
 		$('#lastPlayed').html("");
 	}

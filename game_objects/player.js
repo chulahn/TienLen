@@ -6,7 +6,6 @@ var Player = function(obj) {
 	this.num = obj.num;
 	this.hand = [];
 	this.selectedCards = [];
-	this.isLeader = false;
 }
 
 //Removes selected cards from Players hand and plays them.

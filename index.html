@@ -14,6 +14,49 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
 
+	<script>
+		String.prototype.getLastChar = function() {
+			return this.slice(this.length-1);
+		}
+
+		Array.prototype.addRemoveCard = function(clickedCard) {
+
+			var thisArray = this;
+
+			if (thisArray.length === 0) {
+				thisArray.push(clickedCard);
+				return;
+			}
+
+			var validHandArray = thisArray.every(function(element) {
+				return (typeof element === "object") && element.hasOwnProperty("num") && element.hasOwnProperty("suit") && (thisArray.length > 0)
+			});
+
+			if (validHandArray) {
+				for (var i=0; i<thisArray.length; i++) {
+					var currentCard = thisArray[i];
+					//if already in, remove
+					if (typeof currentCard === "object" && currentCard.val === clickedCard.val) {
+						thisArray.splice(i,1);
+						break;
+					}
+
+					//if reached the end, and it wasnt already removed, add
+					if (i === thisArray.length-1) {
+						thisArray.push(clickedCard);
+						break;
+					}
+				}
+			}
+
+			else {
+				alert("every element in array is not a Card or length=0")
+			}
+		}
+
+
+	</script>
+
 </head>
 <body>
 	<h1>Tien Len</h1>

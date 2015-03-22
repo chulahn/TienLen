@@ -25,7 +25,7 @@ app.get('/', function(req, res) {
 var data = [];
 
 
-var cg = exports.currentGame ;
+var cg = exports.currentGame;
 var players = exports.players = [];
 
 function emitEach(eventName, data) {
@@ -35,7 +35,7 @@ function emitEach(eventName, data) {
 		if (eventName === 'setUpPlayer') {
 			data = cg.players[j];
 			console.log('emitting setup player ' + currentPlayer.id)
-			io.to(currentPlayer.id).emit(eventName, {playerData: data , lastPlayedHand: cg.lastPlayedHand});
+			io.to(currentPlayer.id).emit(eventName, {playerData: data , updatedGame: cg});
 			// return;
 		}
 
@@ -58,9 +58,8 @@ io.on('connection', function(socket) {
 	if (players.length === 4) {
 		console.log('ready to start')
 		cg = new Game(players);
-		emitEach('setUpPlayer');
-		console.log(cg.players[0])
 		cg.findStartingPlayer();
+		emitEach('setUpPlayer');
 		cg.displayCards();
 	}
 
@@ -81,6 +80,36 @@ io.on('connection', function(socket) {
 	socket.on('getGameData', function() {
 		socket.emit('receiveGameData', cg)
 	});
+
+	socket.on('getLastPlayedHand', function() {
+		socket.emit('sendLastPlayedHand', cg.lastPlayedHand);
+	});
+
+	socket.on('updatePlayer', function(updatedPlayer) {
+		console.log('updating player')
+		var i = cg.findPlayerIndex(updatedPlayer);
+		console.log(cg.players[i].hand.cards.length)
+		cg.players[i] = updatedPlayer;
+		cg.players[i].__proto__ = Player.prototype;
+		console.log(cg.players[i].hand.cards.length)
+	});
+
+	socket.on('updateLastPlayedHand', function(lastPlayedHand) {
+		console.log('on updating last played')
+		cg.lastPlayedHand = lastPlayedHand;
+		cg.lastPlayedHand.__proto__ = Hand.prototype;
+	});
+
+	socket.on('sendLastPlayedHTML', function(html) {
+		console.log('received lastplayed, emitting')
+		socket.broadcast.emit('displayLastPlayed', html);
+	});
+
+	socket.on('sendCurrentRuleHTML', function(html) {
+		console.log('recive currentRuleHTML')
+		socket.broadcast.emit('displayCurrentRule', html);
+
+	})
 });
 
 
