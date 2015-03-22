@@ -41,19 +41,17 @@ socket.on('connect' , function() {
 		console.log('got last played hand ' + new Hand(data));
 	});
 
-	socket.on('displayLastPlayed', function(html) {
-		console.log('socket on displaylastplayed');
-		$("#lastPlayed").html(html);
-	});
+	//passed html to server to be shown on the other clients
+	socket.on('displayNewRule', function(d) {
 
-	socket.on('displayCurrentRule', function(html) {
-		console.log('on displaycurrentrule');
-		$("#currentRule").html(html);
+		$("#lastPlayed").html(d.lastPlayed);
+		$("#currentRule").html(d.currentRule);
+		highlightNextPlayer();
+
 	});
 
 	socket.on('playedCards', function(cg) {
 		console.log('a player played cards')
-		highlightNextPlayer();
 
 		//NEED TO update players
 		localGame.lastPlayedHand = new Hand(cg.lastPlayedHand);
@@ -124,9 +122,7 @@ $(document).on('click', '.btn.playCards', function() {
 		if (selectedCards.followsRule() && selectedCards.beats(lastPlayedHand)) {
 			console.log('follows rule amd beats lastplayed')
 			
-			//save cards that were played in global Game object, and display them in #lastPlayed
-
-			//get the Cards that are going to be played, and create the HTML to display cards
+			//get the Cards that are going to be played, and create the HTML to display cards in lastPlayed Div
 			var cardsToRemove = selectedPlayer.find('.selected');
 			var lastPlayedHTML = "";
 			cardsToRemove.each(function() {
@@ -134,28 +130,23 @@ $(document).on('click', '.btn.playCards', function() {
 			});
 			lastPlayedHTML = lastPlayedHTML.replace(new RegExp("selected" , "g"), "");
 			lastPlayedHTML += "by Player " + (playerIndex + 1);
-			//update locally, update to other players
 			$("#lastPlayed").html(lastPlayedHTML);
-			console.log('emitting updateLastPlayedHTML');
-			socket.emit('updateLastPlayedHTML', lastPlayedHTML);
 
 
-			//remove cards from player's Hand object and player's div
+			//remove cards from player's Hand object(and servers) and player's div
 			thisPlayer.playCards();
 			console.log('successfully removed.  ', thisPlayer.hand.cards.length , ' cards left');
 			cardsToRemove.remove();
 			//NEED TO remove cards in other players screen
 
-			//Show Current Rule, highlight next Player, change currentPlayer Text
+			//Show Current Rule based on played cards.
 			localGame.currentRule = selectedCards.getType();
 			$("#currentRule").html(localGame.currentRule);
-			socket.emit('updateCurrentRuleHTML', localGame.currentRule);
-
-			//update everyones TurnData
-			// cg.setTurnData("Leader" , playerIndex);
-
-			//NEED TO highlightNextPlayer for other players
 			highlightNextPlayer();
+
+
+			//Display changes to the other clients 
+			socket.emit('displayNewRule', {lastPlayed:lastPlayedHTML, currentRule: localGame.currentRule})
 		}
 
 		else {

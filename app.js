@@ -85,14 +85,8 @@ io.on('connection', function(socket) {
 		socket.emit('sendLastPlayedHand', cg.lastPlayedHand);
 	});
 
-	socket.on('updateLastPlayedHTML', function(html) {
-		console.log('received lastplayed, emitting')
-		socket.broadcast.emit('displayLastPlayed', html);
-	});
-
-	socket.on('updateCurrentRuleHTML', function(html) {
-		console.log('recive updateCurrentRuleHTML')
-		socket.broadcast.emit('displayCurrentRule', html);
+	socket.on('displayNewRule', function(d) {
+		socket.broadcast.emit('displayNewRule',d);
 	});
 
 	socket.on('playedCards', function(d) {
