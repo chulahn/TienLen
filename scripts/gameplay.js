@@ -49,7 +49,18 @@ socket.on('connect' , function() {
 	socket.on('displayCurrentRule', function(html) {
 		console.log('on displaycurrentrule');
 		$("#currentRule").html(html);
-	})
+	});
+
+	socket.on('playedCards', function(cg) {
+		console.log('a player played cards')
+		highlightNextPlayer();
+
+		//NEED TO update players
+		localGame.lastPlayedHand = new Hand(cg.lastPlayedHand);
+		localGame.leader = cg.leader;
+		localGame.currentPlayer = cg.currentPlayer;
+		localGame.turnData = cg.turnData;
+	});
 
 });
 
@@ -125,8 +136,8 @@ $(document).on('click', '.btn.playCards', function() {
 			lastPlayedHTML += "by Player " + (playerIndex + 1);
 			//update locally, update to other players
 			$("#lastPlayed").html(lastPlayedHTML);
-			console.log('emitting sendLastPlayedHTML');
-			socket.emit('sendLastPlayedHTML', lastPlayedHTML);
+			console.log('emitting updateLastPlayedHTML');
+			socket.emit('updateLastPlayedHTML', lastPlayedHTML);
 
 
 			//remove cards from player's Hand object and player's div
@@ -138,8 +149,7 @@ $(document).on('click', '.btn.playCards', function() {
 			//Show Current Rule, highlight next Player, change currentPlayer Text
 			localGame.currentRule = selectedCards.getType();
 			$("#currentRule").html(localGame.currentRule);
-			socket.emit('sendCurrentRuleHTML', localGame.currentRule);
-
+			socket.emit('updateCurrentRuleHTML', localGame.currentRule);
 
 			//update everyones TurnData
 			// cg.setTurnData("Leader" , playerIndex);

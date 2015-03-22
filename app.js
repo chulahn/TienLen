@@ -85,31 +85,38 @@ io.on('connection', function(socket) {
 		socket.emit('sendLastPlayedHand', cg.lastPlayedHand);
 	});
 
-	socket.on('updatePlayer', function(updatedPlayer) {
-		console.log('updating player')
-		var i = cg.findPlayerIndex(updatedPlayer);
-		console.log(cg.players[i].hand.cards.length)
-		cg.players[i] = updatedPlayer;
-		cg.players[i].__proto__ = Player.prototype;
-		console.log(cg.players[i].hand.cards.length)
-	});
-
-	socket.on('updateLastPlayedHand', function(lastPlayedHand) {
-		console.log('on updating last played')
-		cg.lastPlayedHand = lastPlayedHand;
-		cg.lastPlayedHand.__proto__ = Hand.prototype;
-	});
-
-	socket.on('sendLastPlayedHTML', function(html) {
+	socket.on('updateLastPlayedHTML', function(html) {
 		console.log('received lastplayed, emitting')
 		socket.broadcast.emit('displayLastPlayed', html);
 	});
 
-	socket.on('sendCurrentRuleHTML', function(html) {
-		console.log('recive currentRuleHTML')
+	socket.on('updateCurrentRuleHTML', function(html) {
+		console.log('recive updateCurrentRuleHTML')
 		socket.broadcast.emit('displayCurrentRule', html);
+	});
 
-	})
+	socket.on('playedCards', function(d) {
+
+		var i = cg.findPlayerIndex(d.updatedPlayer);
+		console.log('----player ' + (i+1) + ' played cards----')
+		console.log(cg.players[i].hand.cards.length)
+		cg.players[i] = d.updatedPlayer;
+		cg.players[i].__proto__ = Player.prototype;
+		console.log(cg.players[i].hand.cards.length)
+
+		cg.lastPlayedHand = d.oldGame.lastPlayedHand;
+		cg.lastPlayedHand.__proto__ = Hand.prototype;
+
+		cg.leader = d.oldGame.leader;
+		cg.currentPlayer = d.oldGame.currentPlayer;
+		cg.turnData = d.oldGame.turnData;
+		console.log('displaying turndata ', + cg.leader +" "+ cg.currentPlayer);
+		console.log('-----end played cards.  emitting to other players-----')
+
+		//NEED TO pass updated player to local
+		socket.broadcast.emit('playedCards', cg);
+
+	});
 });
 
 

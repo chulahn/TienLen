@@ -77,14 +77,12 @@ Player.prototype.playCards = function() {
 	}
 
 
-	//check rule is valid, matches currentGame.currentRule, and beats lastHand.
-
-	//set currentGame data(turnData, leader)
-	//update to other players
 	if (cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
-		console.log('beats rule')
 
-		//Update's Local Player's selectedCards, removes Cards and resorts.  Then updates Serve's game data
+		console.log('beats lastPlayedHand and valid')
+		localGame.lastPlayedHand = cardsToPlay;
+		
+		//Removes played Cards and resorts.  Resets player's selectedCards
 		cardsToPlay.cards.forEach(function (cardToRemove) {
 			var cardLocation = playersHand.findCard(cardToRemove);
 
@@ -96,7 +94,6 @@ Player.prototype.playCards = function() {
 				console.log('couldnt find ',cardToRemove.val)
 			}
 		});
-		this.selectedCards = [];
 		playersHand.sortedCards = playersHand.cards.slice().sort(function (a,b) {
 			if (a.num === b.num) {
 				return (a.suit - b.suit);
@@ -105,25 +102,23 @@ Player.prototype.playCards = function() {
 				return (a.num - b.num);
 			}
 		});
-		socket.emit('updatePlayer', this);
-
-		//Update local and server's lastPlayedHand
-		localGame.lastPlayedHand = cardsToPlay;
-		socket.emit('updateLastPlayedHand', localGame.lastPlayedHand);
+		this.selectedCards = [];
 
 
-		//Show Current Rule, highlight next Player, change currentPlayer Text
+		//Sets turnData, and indexes for leader and currentPlayer
+		var l = localGame.leader = localGame.findPlayerIndex(this);
+		(l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
+		localGame.setTurnData("Leader", l);
+
+
+		//Updates server's data 		
+		socket.emit('playedCards', {oldGame : localGame, updatedPlayer : this});
+
 
 		if (playersHand.cards.length === 0) {
 			//call game over function.  player 1
 			alert('Player ' , localGame.players.indexOf(this) , 'is the winner');
 		}
-
-		//set currentPlayer and leader indexes
-		var l = localGame.leader = localGame.players.indexOf(this);
-		(l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
-		localGame.turnData = [0,0,0,0];
-		localGame.turnData[l] = "L";
 	}
 };
 
@@ -407,6 +402,15 @@ Game.prototype.findStartingPlayer = function() {
 		}
 	}
 };
+
+Game.prototype.findPlayerIndex = function(player) {
+	for (var i=0; i<this.players.length; i++) {
+		if (this.players[i].id === player.id) {
+			console.log('index ' + i);
+			return i;
+		}
+	}
+}
 
 Game.prototype.displayCards = function() {
 
