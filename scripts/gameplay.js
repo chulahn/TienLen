@@ -14,8 +14,13 @@ socket.on('connect' , function() {
 		localGame = new Game(data.updatedGame);
 		thisPlayerIndex = data.playerData;
 		thisPlayer = localGame.players[data.playerData];
+		console.log('------before last played')
+		console.log(localGame.lastPlayedHand)
 		lastPlayedHand = new Hand(localGame.lastPlayedHand);
+		console.log('after last played-----')
 		currentRule = localGame.currentRule;
+		lastPlayedHand = localGame.lastPlayedHand;
+		console.log('xxxxxxxxxfinished setting up')
 	});
 
 	socket.on('foundStartingPlayer', function(playerNum) {
@@ -65,6 +70,11 @@ socket.on('connect' , function() {
 		localGame.leader = d.cg.leader;
 		localGame.currentPlayer = d.cg.currentPlayer;
 		localGame.turnData = d.cg.turnData;
+		localGame.currentRule = d.cg.currentRule;
+
+		for (var j=0; j<localGame.lastPlayedHand.cards.length; j++) {
+			$('#player'+(i+1)+'>div')[0].remove();
+		}
 	});
 
 });
@@ -127,10 +137,11 @@ $(document).on('click', '.btn.playCards', function() {
 			localGame.lastPlayedHand = lastPlayedHand = fakeHand;
 		}
 		else {
+			lastPlayedHand = localGame.lastPlayedHand;
 			console.log(localGame.lastPlayedHand);
 		}
 		if (cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
-			console.log('follows rule amd beats lastplayed')
+			console.log('follows rule and beats lastplayed')
 			
 			//get the Cards that are going to be played, and create the HTML to display cards in lastPlayed Div
 			var cardsToRemove = selectedPlayer.find('.selected');
@@ -142,6 +153,10 @@ $(document).on('click', '.btn.playCards', function() {
 			lastPlayedHTML += "by Player " + (playerIndex + 1);
 			$("#lastPlayed").html(lastPlayedHTML);
 
+			//Show Current Rule based on played cards.
+			localGame.currentRule = cardsToPlay.getType();
+			$("#currentRule").html(localGame.currentRule);
+			highlightNextPlayer();
 
 			//remove cards from player's Hand object(and servers) and player's div
 			thisPlayer.playCards();
@@ -149,11 +164,7 @@ $(document).on('click', '.btn.playCards', function() {
 			cardsToRemove.remove();
 			//NEED TO remove cards in other players screen
 
-			//Show Current Rule based on played cards.
-			localGame.currentRule = cardsToPlay.getType();
-			$("#currentRule").html(localGame.currentRule);
-			highlightNextPlayer();
-
+			
 
 			//Display changes to the other clients 
 			socket.emit('displayNewRule', {lastPlayed:lastPlayedHTML, currentRule: localGame.currentRule})

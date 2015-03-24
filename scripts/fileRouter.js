@@ -17,6 +17,10 @@ router.get('/images/card_icons_resized.png', function(req, res) {
 	res.sendfile('./images/card_icons_resized.png');
 });
 
+router.get('/images/goyard.jpg', function(req, res) {
+	res.sendfile('./images/goyard.jpg');
+});
+
 router.get('/images/img_trans.gif', function(req, res) {
 	res.sendfile('./images/img_trans.gif');
 });

@@ -141,22 +141,29 @@ Player.prototype.playCards = function() {
 //and sorts, and gets value of Hand.  Called when playing a Hand or creating Player
 var Hand = function(cards) {
 	"use strict";
-	if (cards instanceof Object && cards.val !== undefined) {
-		console.log('Hand constructor, single Card')
+	if (cards instanceof Object && cards.cards === undefined && cards.val !== undefined && cards.length === undefined) {
+		console.log('Hand constructor, single Card');
+		console.log(cards);
 		var a = [];
 		a.push(cards);
 		cards = a;
+		return this;
 	}
+	// called when initialized, or when no rule
 	if (cards == null) {
-		console.log('Null Hand');
+		// console.log('Null Hand');
 		return null;
 	}
-	////FIX
 	if ((cards instanceof Array) === true) {
 		//cards is an Array of Card objects
-		this.cards = cards;
-		console.log('Hand Constructor: Array');
-		this.sortedCards = cards.slice().sort(function (a,b) {
+		var arr = cards;
+		var newCards = [];
+
+		for (var i=0; i<arr.length; i++) {
+			newCards.push(new Card(arr[i]));
+		}
+		this.cards = newCards;
+		this.sortedCards = this.cards.slice().sort(function (a,b) {
 			if (a.num === b.num) {
 				return (a.suit - b.suit);
 			}
@@ -168,23 +175,29 @@ var Hand = function(cards) {
 	}
 
 	else {
-		console.log('Hand copy constructor');
+		// console.log('Hand copy constructor');
 		var oldHand = cards;
-
-		var newCards = [];
-		for (var i=0; i<oldHand.cards.length; i++) {
-			newCards.push(new Card(oldHand.cards[i]));
+		if (oldHand.cards) {
+			var newCards = [];
+			for (var i=0; i<oldHand.cards.length; i++) {
+				newCards.push(new Card(oldHand.cards[i]));
+			}
+			this.cards = newCards;
+			this.sortedCards = this.cards.slice().sort(function (a,b) {
+				if (a.num === b.num) {
+					return (a.suit - b.suit);
+				}
+				else {
+					return (a.num - b.num);
+				}
+			});
+			this.val = oldHand.val;
 		}
-		this.cards = newCards;
-		this.sortedCards = this.cards.slice().sort(function (a,b) {
-			if (a.num === b.num) {
-				return (a.suit - b.suit);
-			}
-			else {
-				return (a.num - b.num);
-			}
-		});
-		this.val = oldHand.val;
+		else {
+			console.log("Empty Hand")
+			return this;
+		}
+
 	}
 }
 
@@ -212,6 +225,7 @@ Hand.prototype.findCard = function(cardToFind) {
 
 
 Hand.prototype.isValid = function() {
+	console.log(this);
 	return (this.val.type !== "invalid");
 };
 
@@ -356,7 +370,7 @@ var Game = function(oldGame) {
 	this.currentPlayer = oldGame.currentPlayer;
 
 	this.lastPlayedHand = new Hand(oldGame.lastPlayedHand);
-	console.log('created lastPlayedHand');
+	console.log('created lastPlayedHand---finished creating Game');
 	this.turnData = oldGame.turnData;
 }
 

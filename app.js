@@ -55,7 +55,7 @@ io.on('connection', function(socket) {
 	data.push(socket.id);
 	players.push(newPlayer);
 
-	if (players.length === 4) {
+	if (data.length === 4) {
 		console.log('ready to start')
 		cg = new Game(players);
 		cg.findStartingPlayer();
@@ -104,6 +104,7 @@ io.on('connection', function(socket) {
 		cg.leader = d.oldGame.leader;
 		cg.currentPlayer = d.oldGame.currentPlayer;
 		cg.turnData = d.oldGame.turnData;
+		cg.currentRule = d.oldGame.currentRule;
 		console.log('displaying turndata ', + cg.leader +" "+ cg.currentPlayer);
 		console.log('-----end played cards.  emitting to other players-----')
 
