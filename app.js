@@ -35,7 +35,7 @@ function emitEach(eventName, data) {
 		if (eventName === 'setUpPlayer') {
 			data = cg.players[j];
 			console.log('emitting setup player ' + currentPlayer.id)
-			io.to(currentPlayer.id).emit(eventName, {playerData: data , updatedGame: cg});
+			io.to(currentPlayer.id).emit(eventName, {playerData: j , updatedGame: cg});
 			// return;
 		}
 
@@ -108,7 +108,7 @@ io.on('connection', function(socket) {
 		console.log('-----end played cards.  emitting to other players-----')
 
 		//NEED TO pass updated player to local
-		socket.broadcast.emit('playedCards', cg);
+		socket.broadcast.emit('playedCards', {cg: cg, updatedPlayer: d.updatedPlayer});
 
 	});
 });

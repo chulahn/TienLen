@@ -1,5 +1,6 @@
 var socket = io.connect('http://localhost:3000');
 
+var thisPlayerIndex;
 var thisPlayer;
 var lastPlayedHand;
 var currentRule;
@@ -10,9 +11,10 @@ socket.on('connect' , function() {
 
 	socket.on('setUpPlayer', function(data) {
 		console.log('settingup player')
-		thisPlayer = new Player(data.playerData);
 		localGame = new Game(data.updatedGame);
-		lastPlayedHand = localGame.lastPlayedHand;
+		thisPlayerIndex = data.playerData;
+		thisPlayer = localGame.players[data.playerData];
+		lastPlayedHand = new Hand(localGame.lastPlayedHand);
 		currentRule = localGame.currentRule;
 	});
 
@@ -50,14 +52,19 @@ socket.on('connect' , function() {
 
 	});
 
-	socket.on('playedCards', function(cg) {
+	socket.on('playedCards', function(d) {
 		console.log('a player played cards')
 
+		var i = localGame.findPlayerIndex(d.updatedPlayer);
+		localGame.players[i] = new Player(d.updatedPlayer);
+
+
+
 		//NEED TO update players
-		localGame.lastPlayedHand = new Hand(cg.lastPlayedHand);
-		localGame.leader = cg.leader;
-		localGame.currentPlayer = cg.currentPlayer;
-		localGame.turnData = cg.turnData;
+		localGame.lastPlayedHand = new Hand(d.cg.lastPlayedHand);
+		localGame.leader = d.cg.leader;
+		localGame.currentPlayer = d.cg.currentPlayer;
+		localGame.turnData = d.cg.turnData;
 	});
 
 });
@@ -97,29 +104,32 @@ $(document).on('click', '.btn.playCards', function() {
 	var playerIndex = selectedPlayer.attr('id');
 	playerIndex = playerIndex.getLastChar() - 1;
 
-	// var thisPlayerObj = cg.players[playerIndex];
-	// var selectedCards = new Hand(thisPlayerObj.selectedCards);
-
-	var selectedCards = new Hand(thisPlayer.selectedCards);
-
+	var cardsToPlay = new Hand(thisPlayer.selectedCards);
+	console.log(cardsToPlay)
+	
 	socket.emit('getGameData');
 
 	socket.on('receiveGameData', function(data) {
 		console.log('received gamedata')
 		localGame = new Game(data);
+		thisPlayer = localGame.players[thisPlayerIndex];
+		// thisPlayer.selectedCards = cardsToPlay;
+
 
 		//for first move
 		if (localGame.lastPlayedHand.val == undefined) {
 			console.log('lastplayedhand was null')
 			var fakeHand = new Hand(thisPlayer.selectedCards);
 			fakeHand.val.highest = new Card(-1,-1);
+			console.log(fakeHand)
+			console.log(cardsToPlay)
+			console.log(fakeHand == cardsToPlay)
 			localGame.lastPlayedHand = lastPlayedHand = fakeHand;
 		}
 		else {
 			console.log(localGame.lastPlayedHand);
 		}
-
-		if (selectedCards.followsRule() && selectedCards.beats(lastPlayedHand)) {
+		if (cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
 			console.log('follows rule amd beats lastplayed')
 			
 			//get the Cards that are going to be played, and create the HTML to display cards in lastPlayed Div
@@ -140,7 +150,7 @@ $(document).on('click', '.btn.playCards', function() {
 			//NEED TO remove cards in other players screen
 
 			//Show Current Rule based on played cards.
-			localGame.currentRule = selectedCards.getType();
+			localGame.currentRule = cardsToPlay.getType();
 			$("#currentRule").html(localGame.currentRule);
 			highlightNextPlayer();
 

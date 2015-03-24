@@ -5,21 +5,34 @@ var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
 var currentGame;
 var socket = io.connect('http://localhost:3000');
 
+//Card can take in a Card, a String, or two ints
 var Card = function (a, b) {
 	"use strict";
+	//Passed in Object or String
 	if (b === undefined) {
-		var divide = a.indexOf(":");
-
-		var thisSuit = a.slice(divide+1);
-		var thisNum = a.slice(0,divide);
-		if (!(isNaN(parseInt(thisNum)))) {
-			thisNum = parseInt(thisNum);
+		//Copy Constructor
+		if ((a.length === undefined) && (typeof a === "object")) {
+			//console.log("Card Copy Constructor");
+			this.num = a.num;
+			this.suit = a.suit;
+			this.val = a.val;
 		}
+		else if (typeof a === "string" && a.length > 0) {	
+			//console.log('Card Constructor String ' + a)	
+			
+			var divide = a.indexOf(":");
+			var thisSuit = a.slice(divide+1);
+			var thisNum = a.slice(0,divide);
+			if (!(isNaN(parseInt(thisNum)))) {
+				thisNum = parseInt(thisNum);
+			}
 
-		this.num = numValues.indexOf(thisNum);
-		this.suit = suitValues.indexOf(thisSuit);
-		this.val = a;
+			this.num = numValues.indexOf(thisNum);
+			this.suit = suitValues.indexOf(thisSuit);
+			this.val = a;
+		}
 	}
+	//Pass in Two Ints.(0-12, 0-3)
 	else {
 		this.num = a;
 		this.suit = b;
@@ -52,7 +65,7 @@ Card.prototype.compareTo = function (b) {
 
 var threeOfSpades = new Card(0,0);
 
-//Copy constructor, so new object will have prototype methods
+//Player Copy constructor, so new object will have prototype methods
 var Player = function(obj) {
 	"use strict";
 	this.id = obj.id;
@@ -61,9 +74,10 @@ var Player = function(obj) {
 	this.selectedCards = obj.selectedCards;
 }
 
-//Removes selected cards from Players hand and plays them.
-//sets currentGame.Leader to this Player if true.
-//sets currentGame.lastHand to played hand if true.
+//Removes selected cards from Players hand, resets selected Cards and re-sorts hand.
+//Sets turnData, and leader and currentPlayer indexes.
+//Sets lastPlayedHand
+//Saves data locally and on server
 Player.prototype.playCards = function() {
 	"use strict";
 	var playersHand = this.hand;
@@ -124,23 +138,24 @@ Player.prototype.playCards = function() {
 
 
 //Hand object takes in array of Cards, or a single card
-//and sorts, and gets value of Hand.  Called when playing a Hand
+//and sorts, and gets value of Hand.  Called when playing a Hand or creating Player
 var Hand = function(cards) {
 	"use strict";
-	// if (cards instanceof Card) {
-	// 	console.log('here')
-	// 	var a = [];
-	// 	a.push(cards);
-	// 	cards = a;
-	// }
-
+	if (cards instanceof Object && cards.val !== undefined) {
+		console.log('Hand constructor, single Card')
+		var a = [];
+		a.push(cards);
+		cards = a;
+	}
 	if (cards == null) {
+		console.log('Null Hand');
 		return null;
 	}
-
+	////FIX
 	if ((cards instanceof Array) === true) {
 		//cards is an Array of Card objects
 		this.cards = cards;
+		console.log('Hand Constructor: Array');
 		this.sortedCards = cards.slice().sort(function (a,b) {
 			if (a.num === b.num) {
 				return (a.suit - b.suit);
@@ -153,12 +168,24 @@ var Hand = function(cards) {
 	}
 
 	else {
+		console.log('Hand copy constructor');
 		var oldHand = cards;
-		this.cards = oldHand.cards;
-		this.sortedCards = oldHand.sortedCards;
+
+		var newCards = [];
+		for (var i=0; i<oldHand.cards.length; i++) {
+			newCards.push(new Card(oldHand.cards[i]));
+		}
+		this.cards = newCards;
+		this.sortedCards = this.cards.slice().sort(function (a,b) {
+			if (a.num === b.num) {
+				return (a.suit - b.suit);
+			}
+			else {
+				return (a.num - b.num);
+			}
+		});
 		this.val = oldHand.val;
 	}
-
 }
 
 //Returns index of the Card if in Hand, else -1
@@ -171,6 +198,7 @@ Hand.prototype.findCard = function(cardToFind) {
 				return i;
 			}
 		}
+		//Last card
 		else {
 			if (currentCard.val === cardToFind.val) {
 				return i;
@@ -181,6 +209,7 @@ Hand.prototype.findCard = function(cardToFind) {
 		}
 	}
 };
+
 
 Hand.prototype.isValid = function() {
 	return (this.val.type !== "invalid");
@@ -198,6 +227,7 @@ Hand.prototype.getType = function() {
 	else {
 		for (var i=0; i<sortedCards.length; i++) {
 			var currentCard = sortedCards[i];
+			//Get nextCard if not at the end
 			if (i !== sortedCards.length-1) {
 				var nextCard = sortedCards[i+1];
 			}
@@ -230,8 +260,8 @@ Hand.prototype.getType = function() {
 					}
 				}
 
-				//check for straights
-				//did not reach end, check if next value is 1 more
+				//Check for straights
+				//Did not reach end, check if next card value is 1 more
 				else if (i !== sortedCards.length-1) {
 					numToMatch = currentCard.num+1;
 					if (nextCard.num !== numToMatch) {
@@ -239,6 +269,7 @@ Hand.prototype.getType = function() {
 					}
 				}
 
+				//Finally reached end, is a Straight
 				else if (i === sortedCards.length-1) {
 					return "Straight " + sortedCards.length;
 				}
@@ -278,12 +309,10 @@ Hand.prototype.beats = function(b) {
 	}
 }
 
-//CHecks if Hand follows current rule.
+//Checks if Hand follows current rule.
 Hand.prototype.followsRule = function() {
-
-	// var cr = currentRule;
 	var cr = localGame.currentRule;
-	console.log(cr);
+	console.log('Hand.followsRule ' + cr);
 
 	if (cr !== "Start" && cr !== "None") {
 		return (this.val.type === localGame.currentRule);
@@ -297,7 +326,6 @@ Hand.prototype.followsRule = function() {
 				alert("Must have 3 of Spades in Starting Hand");
 			}
 
-			
 			return this.isValid() && containsThreeOfSpades;
 		}
 
@@ -308,27 +336,27 @@ Hand.prototype.followsRule = function() {
 }
 
 
-
-
-
 var Game = function(oldGame) {
 
+	//Copy Constructor for Game
 	"use strict";
 	this.deck = oldGame.deck;
 
 	var newPlayerArray = [];
+	console.log('Game constructor.  Looping through players');
 	for (var i=0; i<oldGame.players.length; i++) {
 		var newPlayer = new Player(oldGame.players[i]);
 		newPlayerArray.push(newPlayer);
 	}
 	this.players = newPlayerArray;
+	console.log('created all players');
 
 	this.currentRule = oldGame.currentRule;
 	this.leader = oldGame.leader;
 	this.currentPlayer = oldGame.currentPlayer;
 
 	this.lastPlayedHand = new Hand(oldGame.lastPlayedHand);
-	
+	console.log('created lastPlayedHand');
 	this.turnData = oldGame.turnData;
 }
 
@@ -368,7 +396,7 @@ Game.prototype.dealCards = function() {
 		currentPlayer.hand.push(cardToDeal);
 
 		if (Math.floor(i/4) === 12) {
-			currentPlayer.hand = new Hand(currentPlayer.hand)
+			currentPlayer.hand = new Hand(currentPlayer.hand);
 		}
 	}
 };
