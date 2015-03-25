@@ -121,7 +121,8 @@ Player.prototype.playCards = function() {
 
 		//Sets turnData, and indexes for leader and currentPlayer
 		var l = localGame.leader = localGame.findPlayerIndex(this);
-		(l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
+		localGame.currentPlayer = l.nextIndex();
+		// (l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
 		localGame.setTurnData("Leader", l);
 
 

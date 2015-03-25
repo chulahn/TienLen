@@ -157,6 +157,13 @@ io.on('connection', function(socket) {
 		socket.broadcast.emit('playedCards', {cg: cg, updatedPlayer: d.updatedPlayer});
 
 	});
+
+	socket.on('skipTurn', function(localGame) {
+		cg.currentPlayer = localGame.currentPlayer;
+		cg.turnData = localGame.turnData;
+		var newTurn = cg.checkTurnData(); 
+		socket.broadcast.emit('skipTurn', {cg:cg, newTurn:newTurn});
+	});
 });
 
 

@@ -188,12 +188,15 @@ Game.prototype.checkTurnData = function() {
 		var leader = this.turnData.indexOf("Leader");
 		this.turnData = [0,0,0,0];
 		this.turnData[leader] = ["Start"];
-		alert("New Turn.  Player " + (leader+1) + " starts");
-		currentGame.currentRule = "None";
-		currentGame.lastPlayedHand = null;
-		$('#currentRule').html("None");
-		$('#lastPlayed').html("");
+
+		this.currentRule = "None";
+		this.lastPlayedHand = null;
+		return true;
+		// alert("New Turn.  Player " + (leader+1) + " starts");
+		// $('#currentRule').html("None");
+		// $('#lastPlayed').html("");
 	}
+	return false;
 }
 
 module.exports = Game;

@@ -40,8 +40,8 @@ socket.on('connect' , function() {
 
 
 		//div #
-		var currentPlayerDiv = (currentPlayer === 4 ? 0 : currentPlayer+1);
-		var leaderDiv = (leader === 4 ? 0 : leader + 1);
+		var currentPlayerDiv = currentPlayer.toDivNum();
+		var leaderDiv = leader.toDivNum();
 
 
 		$('.card').remove();
@@ -113,6 +113,19 @@ socket.on('connect' , function() {
 		}
 	});
 
+	socket.on('skipTurn', function(d) {
+		highlightNextPlayer();
+		localGame.turnData = d.cg.turnData;
+		localGame.currentPlayer = d.cg.currentPlayer;
+
+		$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum())
+		if (d.newTurn) {
+			var leader = this.turnData.indexOf("Start");
+			alert("New Turn.  Player " + (leader+1) + " starts");
+			$('#currentRule').html("None");
+			$('#lastPlayed').html("");
+		}
+	});
 });
 
 $(document).ready(function() {
@@ -178,6 +191,7 @@ $(document).on('click', '.btn.playCards', function() {
 			lastPlayedHand = localGame.lastPlayedHand;
 			console.log(localGame.lastPlayedHand);
 		}
+
 		if (cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
 			console.log('follows rule and beats lastplayed')
 			
@@ -221,7 +235,11 @@ $(document).on('click', '.btn.skipTurn', function() {
 	var playerIndex = thisPlayer.attr('id');
 	playerIndex = playerIndex.slice(playerIndex.length-1) - 1;
 
+	localGame.currentPlayer = localGame.currentPlayer.nextIndex();
 	localGame.setTurnData("Pass", playerIndex);
+
+	socket.emit('skipTurn', localGame);
+
 	highlightNextPlayer();
 	localGame.checkTurnData();
 	
