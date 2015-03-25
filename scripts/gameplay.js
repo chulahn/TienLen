@@ -4,7 +4,9 @@ var thisPlayerIndex;
 var thisPlayer;
 var lastPlayedHand;
 var currentRule;
+var currentPlayer;
 var localGame;
+var leader;
 
 socket.on('connect' , function() {
 	console.log(socket.id)
@@ -21,17 +23,44 @@ socket.on('connect' , function() {
 		currentRule = localGame.currentRule;
 		lastPlayedHand = localGame.lastPlayedHand;
 		console.log('xxxxxxxxxfinished setting up')
+
+		$('.card').remove();
+	});
+
+	socket.on('reconnectGame', function(data) {
+
+		localGame = new Game(data.updatedGame);
+		thisPlayerIndex = data.playerData;
+		thisPlayer = localGame.players[data.playerData];
+		lastPlayedHand = new Hand(localGame.lastPlayedHand);
+		currentRule = localGame.currentRule;
+		lastPlayedHand = localGame.lastPlayedHand;
+		currentPlayer = localGame.currentPlayer;
+		leader = localGame.leader;
+
+
+
+		$('.card').remove();
+		$('.activePlayer').removeClass();
+		$('#lastPlayed').html(lastPlayedHand.createHTML() + "by Player " + (leader === 4 ? 0 : leader + 1))
+		localGame.displayCards();
+		$('.card').addClass('other');
+		$('#player' + (thisPlayerIndex + 1) + ' .card').removeClass('other');
+		$('#player' + currentPlayer).addClass('activePlayer');
+		$('#currentPlayersTurn').html((currentPlayer === 4 ? 0 : currentPlayer+1));
+		$("#currentRule").html(currentRule);
 	});
 
 	socket.on('foundStartingPlayer', function(playerNum) {
 		console.log('player ' + playerNum + ' starts');
-		$('#currentPlayersTurn').html("Player " + playerNum);
+		$('#currentPlayersTurn').html(playerNum);
 		$("#player" + playerNum).addClass("activePlayer");		
 	});
 
 	socket.on('displayCards', function(data) {
 		// console.log('displaying cards');
 		//show all cards
+		$('.card').remove();
 		for (var i =0; i< data.cards.length; i++) {
 			var curr = data.cards[i];
 			$('' + curr.selecter).append(curr.html)
@@ -93,6 +122,8 @@ $(document).on('click', '.card', function() {
 
 
 	//get player
+	console.log(clickedCard);
+	console.log(clickedCard.parent())
 	var selectedPlayer = clickedCard.parent().attr('id');
 	var playerNum = selectedPlayer.getLastChar() - 1;
 
@@ -200,6 +231,6 @@ function highlightNextPlayer() {
 	$('.activePlayer').removeClass('activePlayer');
 
 	$('#player' + nextPlayer).addClass('activePlayer');
-	$('#currentPlayersTurn').html('Player ' + nextPlayer);
+	$('#currentPlayersTurn').html(nextPlayer);
 
 }

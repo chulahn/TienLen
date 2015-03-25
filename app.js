@@ -22,23 +22,36 @@ app.get('/', function(req, res) {
 });
 
 
-var data = [];
 
 
 var cg = exports.currentGame;
+var data = [];
 var players = exports.players = [];
+var missingPlayers = [];
+var gameStarted = false;
 
 function emitEach(eventName, data) {
 	for (var j=0; j<4; j++) {
-		var currentPlayer = io.sockets.sockets[j];
 
-		if (eventName === 'setUpPlayer') {
-			data = cg.players[j];
-			console.log('emitting setup player ' + currentPlayer.id)
-			io.to(currentPlayer.id).emit(eventName, {playerData: j , updatedGame: cg});
-			// return;
+		switch(eventName) {
+			case 'setUpPlayer':
+			case 'reconnectGame':
+				var currentPlayer = io.sockets.sockets[j];
+				console.log('emitting ' + eventName + ' ' + currentPlayer.id)
+				io.to(currentPlayer.id).emit(eventName, {playerData: j , updatedGame: cg});
+				break;				
 		}
 
+		// if (eventName === ('setUpPlayer' || 'reconnectGame')) {
+			// return;
+		// }
+
+		// switch (eventName) {
+
+
+		// 	case "reconnectedGame" :
+		// 		io.
+		// }
 		// io.to(currentPlayer.id).emit(eventName, data);
 	};
 }
@@ -48,20 +61,41 @@ io.on('connection', function(socket) {
 	var connectedUsers = io.sockets.sockets.length;
 	console.log(connectedUsers + ' users' + '\n' + socket.id  + ' has connected');
 	
-	var newPlayer = {}
-	newPlayer.id = socket.id;
-	newPlayer.num = players.length;
+	if (gameStarted === false) {
+		var newPlayer = {}
+		newPlayer.id = socket.id;
+		newPlayer.num = players.length;
 
-	data.push(socket.id);
-	players.push(newPlayer);
+		data.push(socket.id);
 
-	if (data.length === 4) {
-		console.log('ready to start')
-		cg = new Game(players);
-		cg.findStartingPlayer();
-		emitEach('setUpPlayer');
-		cg.displayCards();
+		players.push(newPlayer);
+
+		if (data.length === 4) {
+			console.log('ready to start')
+			gameStarted = true;
+			cg = new Game(players);
+			cg.findStartingPlayer();
+			emitEach('setUpPlayer');
+			cg.displayCards();
+		}		
 	}
+	else {
+		if (data.length < 4) {
+			data.push(socket.id);
+			var newConnected = missingPlayers.shift();
+			newConnected.id = socket.id;	
+			players.push(newConnected); //push a Player object instead of object containing id and num
+			cg.players[newConnected.num] = newConnected; 
+			if (data.length === 4) {
+				//update everyones game
+				console.log('reconnectingGame')
+				emitEach("reconnectGame");
+			}
+		}
+
+	}
+
+	
 
 	socket.on('clickedCard', function(data) {
 		if (data !== undefined) {
@@ -74,7 +108,18 @@ io.on('connection', function(socket) {
 	socket.on('disconnect', function() {
 		var discPlayer = data.indexOf(socket.id);
 		data.splice(discPlayer,1);
-		console.log(data.length + '\n' + socket.id + ' has disconnected');
+		console.log(data.length + 'players.  ' + socket.id + ' has disconnected');
+
+		missingPlayers.push(players.splice(discPlayer,1));
+		console.log(missingPlayers);
+		console.log('--------');
+
+		if (data.length === 0) {
+			console.log('no connections, deleting game')
+			missingPlayers = [];
+			gameStarted = false;
+		}
+
 	});
 
 	socket.on('getGameData', function() {

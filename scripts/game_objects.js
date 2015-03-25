@@ -349,6 +349,49 @@ Hand.prototype.followsRule = function() {
 	}
 }
 
+Hand.prototype.createHTML = function() {
+	cards = this.sortedCards;
+	var cardHTML = "";
+
+	for (var i=0; i<cards.length; i++) {
+		var currentCard = cards[i];
+
+		cardHTML += "<div class='card panel-primary' alt='";
+		cardHTML += currentCard.val;
+		cardHTML += "'>";
+
+		cardHTML += "<div class='panel-heading'>";
+
+		cardHTML += "<span id='card_font'>";
+		cardHTML += numValues[currentCard.num];
+		cardHTML += "</span>";
+
+		var iconHTML = "<img class='";
+		switch (currentCard.suit) {
+			case 0:
+				iconHTML += "spade";
+				break;
+			case 1:
+				iconHTML += "clover";
+				break;
+			case 2:
+				iconHTML += "diamond";
+				break;
+			case 3:
+				iconHTML += "heart";
+				break;
+		}
+		iconHTML += "' src='/images/img_trans.gif'></img>";
+		cardHTML += iconHTML;
+
+		cardHTML += "</div>";
+		cardHTML += "<div class ='panel-body'>";
+		cardHTML += "</div>";
+		cardHTML += "</div>";
+	}
+
+	return cardHTML;
+}
 
 var Game = function(oldGame) {
 
@@ -431,7 +474,7 @@ Game.prototype.findStartingPlayer = function() {
 
 			if (currentCard.val === threeOfSpades.val) {
 				var playerNumber = (i+1);
-				$('#currentPlayersTurn').html("Player " + playerNumber);
+				$('#currentPlayersTurn').html(playerNumber);
 				$("#player" + playerNumber).addClass("activePlayer");
 				$(".card[alt='3:Spade']").addClass("selected");
 
