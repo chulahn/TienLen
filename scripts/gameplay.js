@@ -39,15 +39,22 @@ socket.on('connect' , function() {
 		leader = localGame.leader;
 
 
+		//div #
+		var currentPlayerDiv = (currentPlayer === 4 ? 0 : currentPlayer+1);
+		var leaderDiv = (leader === 4 ? 0 : leader + 1);
+
 
 		$('.card').remove();
 		$('.activePlayer').removeClass();
-		$('#lastPlayed').html(lastPlayedHand.createHTML() + "by Player " + (leader === 4 ? 0 : leader + 1))
+		$('#lastPlayed').html(lastPlayedHand.createHTML());
+		if (lastPlayedHand.cards) {
+			$('#lastPlayed').append("by Player " + leaderDiv);
+		}
 		localGame.displayCards();
 		$('.card').addClass('other');
 		$('#player' + (thisPlayerIndex + 1) + ' .card').removeClass('other');
-		$('#player' + currentPlayer).addClass('activePlayer');
-		$('#currentPlayersTurn').html((currentPlayer === 4 ? 0 : currentPlayer+1));
+		$('#player' + currentPlayerDiv).addClass('activePlayer player');
+		$('#currentPlayersTurn').html(currentPlayerDiv);
 		$("#currentRule").html(currentRule);
 	});
 

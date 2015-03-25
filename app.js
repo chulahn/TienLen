@@ -100,7 +100,7 @@ io.on('connection', function(socket) {
 	socket.on('clickedCard', function(data) {
 		if (data !== undefined) {
 			cg.players[data.playerNum].selectedCards = data.selectedCards;
-			console.log('Player ' + data.playerNum);
+			console.log('Player ' + data.playerNum+1);
 			console.log(cg.players[data.playerNum].selectedCards);
 		};
 	});

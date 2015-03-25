@@ -117,9 +117,9 @@ Game.prototype.displayCards = function() {
 	for (var i=0; i<this.players.length ; i++) {
 
 		var currentPlayer = this.players[i];
-		var currentPlayersHand = currentPlayer.hand.cards;
-		var cardHTML = "";
-
+		var currentPlayersHand = currentPlayer.hand;
+		var cardHTML = currentPlayersHand.createHTML();
+		/*
 		for (var j=0; j< currentPlayersHand.length; j++) {
 
 			var currentCard = currentPlayersHand[j];
@@ -156,8 +156,8 @@ Game.prototype.displayCards = function() {
 			cardHTML += "<div class ='panel-body'>";
 			cardHTML += "</div>";
 			cardHTML += "</div>";
-
 		}
+		*/
 		var obj = {};
 		obj.selecter = "#player" + (i+1);
 		obj.html = cardHTML;

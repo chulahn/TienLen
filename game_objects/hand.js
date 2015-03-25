@@ -1,3 +1,6 @@
+var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
+var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
+
 var Card = require('./card.js');
 //Hand object takes in array of Cards, or a single card, and organizes
 var Hand = function(cards) {
@@ -161,6 +164,55 @@ Hand.prototype.followsRule = function() {
 		else if (cr === "None") {
 			return this.isValid();
 		}
+	}
+}
+
+Hand.prototype.createHTML = function() {
+	cards = this.sortedCards;
+	if (cards) {
+		var cardHTML = "";
+
+		for (var i=0; i<cards.length; i++) {
+			var currentCard = cards[i];
+
+			cardHTML += "<div class='card panel-primary' alt='";
+			cardHTML += currentCard.val;
+			cardHTML += "'>";
+
+			cardHTML += "<div class='panel-heading'>";
+
+			cardHTML += "<span id='card_font'>";
+			cardHTML += numValues[currentCard.num];
+			cardHTML += "</span>";
+
+			var iconHTML = "<img class='";
+			switch (currentCard.suit) {
+				case 0:
+					iconHTML += "spade";
+					break;
+				case 1:
+					iconHTML += "clover";
+					break;
+				case 2:
+					iconHTML += "diamond";
+					break;
+				case 3:
+					iconHTML += "heart";
+					break;
+			}
+			iconHTML += "' src='/images/img_trans.gif'></img>";
+			cardHTML += iconHTML;
+
+			cardHTML += "</div>";
+			cardHTML += "<div class ='panel-body'>";
+			cardHTML += "</div>";
+			cardHTML += "</div>";
+		}
+
+		return cardHTML;
+	}
+	else {
+		return "Nothing";
 	}
 }
 
