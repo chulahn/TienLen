@@ -27,6 +27,8 @@ socket.on('connect' , function() {
 		// $('.activePlayer').removeClass('activePlayer');
 
 		$('#playerInfo').html(thisPlayerIndex.toDivNum())
+
+		//old socket on displayCards
 		$('.card').remove();
 		localGame.displayCards();
 		$('.card').addClass('other');
@@ -74,20 +76,6 @@ socket.on('connect' , function() {
 		$("#player" + playerNum).addClass("activePlayer");		
 	});
 
-	socket.on('displayCards', function(data) {
-		// console.log('displaying cards');
-		//show all cards
-		$('.card').remove();
-		for (var i =0; i< data.cards.length; i++) {
-			var curr = data.cards[i];
-			$('' + curr.selecter).append(curr.html)
-		}
-		// console.log(data.playerNum)
-		
-		//hides other classes cards
-		$('.card').addClass('other');
-		$('#player' + (data.playerNum+1) +' .card').removeClass('other');
-	});
 
 	socket.on('receiveLastPlayedHand', function(data) {
 		localGame.lastPlayedHand = new Hand(data);  
@@ -97,6 +85,7 @@ socket.on('connect' , function() {
 	//passed html to server to be shown on the other clients
 	socket.on('displayNewRule', function(d) {
 
+		console.log('displayNewRule')
 		$("#lastPlayed").html(d.lastPlayed);
 		$("#currentRule").html(d.currentRule);
 		highlightNextPlayer();
@@ -159,8 +148,7 @@ $(document).on('click', '.card', function() {
 
 	//get player
 	console.log(clickedCard);
-	console.log(clickedCard.parent())
-	var selectedPlayer = clickedCard.parent().attr('id');
+	var selectedPlayer = clickedCard.parent().parent().attr('id');
 	var playerNum = selectedPlayer.getLastChar() - 1;
 
 	//see if clicked card is already selected.
