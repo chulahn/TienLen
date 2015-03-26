@@ -97,7 +97,7 @@ Game.prototype.findStartingPlayer = function() {
 			if (currentCard.val === threeOfSpades.val) {
 				var playerNumber = (i+1);
 				console.log('found starting player ' + playerNumber);
-				server.io.emit('foundStartingPlayer', playerNumber);
+				// server.io.emit('foundStartingPlayer', playerNumber);
 
 				this.currentPlayer = i;
 				this.turnData[i] = "S";
@@ -119,47 +119,9 @@ Game.prototype.displayCards = function() {
 		var currentPlayer = this.players[i];
 		var currentPlayersHand = currentPlayer.hand;
 		var cardHTML = currentPlayersHand.createHTML();
-		/*
-		for (var j=0; j< currentPlayersHand.length; j++) {
-
-			var currentCard = currentPlayersHand[j];
-
-			cardHTML += "<div class='card panel-primary' alt='";
-			cardHTML += currentCard.val;
-			cardHTML += "'>";
-
-			cardHTML += "<div class='panel-heading'>";
-
-			cardHTML += "<span id='card_font'>";
-			cardHTML += numValues[currentCard.num];
-			cardHTML += "</span>";
-
-			var iconHTML = "<img class='";
-			switch (currentCard.suit) {
-				case 0:
-					iconHTML += "spade";
-					break;
-				case 1:
-					iconHTML += "clover";
-					break;
-				case 2:
-					iconHTML += "diamond";
-					break;
-				case 3:
-					iconHTML += "heart";
-					break;
-			}
-			iconHTML += "' src='/images/img_trans.gif'></img>";
-			cardHTML += iconHTML;
-
-			cardHTML += "</div>";
-			cardHTML += "<div class ='panel-body'>";
-			cardHTML += "</div>";
-			cardHTML += "</div>";
-		}
-		*/
+		
 		var obj = {};
-		obj.selecter = "#player" + (i+1);
+		obj.selecter = "#player" + (i+1) + " div.hand";
 		obj.html = cardHTML;
 		display.push(obj);
 	}
@@ -187,7 +149,7 @@ Game.prototype.checkTurnData = function() {
 	if (this.turnData.indexOf(0) === -1) {
 		var leader = this.turnData.indexOf("Leader");
 		this.turnData = [0,0,0,0];
-		this.turnData[leader] = ["Start"];
+		this.turnData[leader] = "Start";
 
 		this.currentRule = "None";
 		this.lastPlayedHand = null;

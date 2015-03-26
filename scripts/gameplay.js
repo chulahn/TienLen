@@ -24,7 +24,16 @@ socket.on('connect' , function() {
 		lastPlayedHand = localGame.lastPlayedHand;
 		console.log('xxxxxxxxxfinished setting up')
 
+		// $('.activePlayer').removeClass('activePlayer');
+
+		$('#playerInfo').html(thisPlayerIndex.toDivNum())
 		$('.card').remove();
+		localGame.displayCards();
+		$('.card').addClass('other');
+		$('#player' + (thisPlayerIndex.toDivNum()) +' .card').removeClass('other');
+
+
+		displayTurnData();
 	});
 
 	socket.on('reconnectGame', function(data) {
@@ -56,6 +65,7 @@ socket.on('connect' , function() {
 		$('#player' + currentPlayerDiv).addClass('activePlayer player');
 		$('#currentPlayersTurn').html(currentPlayerDiv);
 		$("#currentRule").html(currentRule);
+		displayTurnData();
 	});
 
 	socket.on('foundStartingPlayer', function(playerNum) {
@@ -111,6 +121,9 @@ socket.on('connect' , function() {
 		for (var j=0; j<localGame.lastPlayedHand.cards.length; j++) {
 			$('#player'+(i+1)+'>div')[0].remove();
 		}
+
+		displayTurnData();
+
 	});
 
 	socket.on('skipTurn', function(d) {
@@ -125,6 +138,9 @@ socket.on('connect' , function() {
 			$('#currentRule').html("None");
 			$('#lastPlayed').html("");
 		}
+
+		displayTurnData();
+
 	});
 });
 
@@ -215,6 +231,7 @@ $(document).on('click', '.btn.playCards', function() {
 			console.log('successfully removed.  ', thisPlayer.hand.cards.length , ' cards left');
 			cardsToRemove.remove();
 			//NEED TO remove cards in other players screen
+			displayTurnData();
 
 			
 
@@ -241,7 +258,9 @@ $(document).on('click', '.btn.skipTurn', function() {
 	socket.emit('skipTurn', localGame);
 
 	highlightNextPlayer();
+
 	localGame.checkTurnData();
+	displayTurnData();
 	
 
 });
@@ -258,4 +277,32 @@ function highlightNextPlayer() {
 	$('#player' + nextPlayer).addClass('activePlayer');
 	$('#currentPlayersTurn').html(nextPlayer);
 
+}
+
+function displayTurnData() {
+	var turn = localGame.turnData;
+
+	var dispHTML = "<div id='turnTable'>";
+	var player = "<ul><li class='index'>Player";
+	var status = "<ul><li class='index'>Status";
+
+	for (var i=0; i<turn.length; i++) {
+
+		var li = "";
+		(i === thisPlayerIndex) ? li = "<li class='you'>" : li = "<li>";
+
+		player += li + (i+1);
+		status += li + turn[i];
+	}
+
+	player += "</ul>";
+	status += "</ul>";
+
+	dispHTML += player + status + "</div>";
+
+	$('#turnData').html(dispHTML);
+
+	var cpDiv = localGame.currentPlayer.toDivNum(); 
+	$('#currentPlayersTurn').html(cpDiv);
+	$("#player" + cpDiv).addClass("activePlayer");	
 }

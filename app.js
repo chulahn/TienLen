@@ -25,7 +25,7 @@ app.get('/', function(req, res) {
 
 
 var cg = exports.currentGame;
-var data = [];
+var socketIds = [];
 var players = exports.players = [];
 var missingPlayers = [];
 var gameStarted = false;
@@ -66,27 +66,27 @@ io.on('connection', function(socket) {
 		newPlayer.id = socket.id;
 		newPlayer.num = players.length;
 
-		data.push(socket.id);
+		socketIds.push(socket.id);
 
 		players.push(newPlayer);
 
-		if (data.length === 4) {
+		if (socketIds.length === 4) {
 			console.log('ready to start')
 			gameStarted = true;
 			cg = new Game(players);
 			cg.findStartingPlayer();
 			emitEach('setUpPlayer');
-			cg.displayCards();
+			// cg.displayCards();
 		}		
 	}
 	else {
-		if (data.length < 4) {
-			data.push(socket.id);
+		if (socketIds.length < 4) {
+			socketIds.push(socket.id);
 			var newConnected = missingPlayers.shift();
 			newConnected.id = socket.id;	
 			players.push(newConnected); //push a Player object instead of object containing id and num
 			cg.players[newConnected.num] = newConnected; 
-			if (data.length === 4) {
+			if (socketIds.length === 4) {
 				//update everyones game
 				console.log('reconnectingGame')
 				emitEach("reconnectGame");
@@ -106,15 +106,15 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('disconnect', function() {
-		var discPlayer = data.indexOf(socket.id);
-		data.splice(discPlayer,1);
-		console.log(data.length + 'players.  ' + socket.id + ' has disconnected');
+		var discPlayer = socketIds.indexOf(socket.id);
+		socketIds.splice(discPlayer,1);
+		console.log(socketIds.length + 'players. ' + discPlayer + " " + socket.id + ' has disconnected');
 
 		missingPlayers.push(players.splice(discPlayer,1));
 		console.log(missingPlayers);
 		console.log('--------');
 
-		if (data.length === 0) {
+		if (socketIds.length === 0) {
 			console.log('no connections, deleting game')
 			missingPlayers = [];
 			gameStarted = false;

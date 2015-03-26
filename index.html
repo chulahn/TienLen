@@ -45,7 +45,8 @@
 
 		//when changings a players index to div num
 		Number.prototype.toDivNum = function() {
-			return (this == 4 ? 0 : this + 1);
+			return this+1;
+			// return (this == 4 ? 0 : this + 1);
 		}
 
 		//when getting next index
@@ -68,25 +69,35 @@
 </head>
 <body>
 	<h1>Tien Len</h1>
+	<h2>You are Player <span id="playerInfo"></span></h2>
+	<h4 id="turnData">Turn Data</h4>
 	<h3>Current Rule : <span id="currentRule">Start</span></h3>
 	<h3>Last Played : <span id="lastPlayed"></span></h3>
 	<h3>Player <span id="currentPlayersTurn"></span>'s Turn</h3>
 
 	<div class="player" id="player1">
 		<h2>This is player 1s cards<span class="btn btn-primary playCards">Play Cards</span><span class="btn btn-success skipTurn">Skip Turn</span></h2>
+		<div class="hand">
+		</div>
 
 	</div>
 
 	<div class="player" id="player2">
 		<h2>This is player 2s cards<span class="btn btn-primary playCards">Play Cards</span><span class="btn btn-success skipTurn">Skip Turn</span></h2>
+		<div class="hand">
+		</div>
 	</div>
 
 	<div class="player" id="player3">
 		<h2>This is player 3s cards<span class="btn btn-primary playCards">Play Cards</span><span class="btn btn-success skipTurn">Skip Turn</span></h2>
+		<div class="hand">
+		</div>
 	</div>
 
 	<div class="player" id="player4">
 		<h2>This is player 4s cards<span class="btn btn-primary playCards">Play Cards</span><span class="btn btn-success skipTurn">Skip Turn</span></h2>
+		<div class="hand">
+		</div>
 	</div>
 
 	<script src="/socket.io/socket.io.js"></script>

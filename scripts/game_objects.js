@@ -510,50 +510,13 @@ Game.prototype.displayCards = function() {
 		var currentPlayer = this.players[i];
 		var currentPlayersHand = currentPlayer.hand.cards;
 
-		for (var j=0; j< currentPlayersHand.length; j++) {
-
-			var currentCard = currentPlayersHand[j];
-
-			var cardHTML = "<div class='card panel-primary' alt='";
-			cardHTML += currentCard.val;
-			cardHTML += "'>";
-
-			cardHTML += "<div class='panel-heading'>";
-
-			cardHTML += "<span id='card_font'>";
-			cardHTML += numValues[currentCard.num];
-			cardHTML += "</span>";
-
-			var iconHTML = "<img class='";
-			switch (currentCard.suit) {
-				case 0:
-					iconHTML += "spade";
-					break;
-				case 1:
-					iconHTML += "clover";
-					break;
-				case 2:
-					iconHTML += "diamond";
-					break;
-				case 3:
-					iconHTML += "heart";
-					break;
-			}
-
-			iconHTML += "' src='/images/img_trans.gif'></img>";
-			cardHTML += iconHTML;
-
-			cardHTML += "</div>";
-
-			cardHTML += "<div class ='panel-body'>";
+		var currentPlayer = this.players[i];
+		var currentPlayersHand = currentPlayer.hand;
+		var cardHTML = currentPlayersHand.createHTML();
 
 
-			cardHTML += "</div>";
-			cardHTML += "</div>";
-
-			var selector = "#player" + (i+1);
-			$("#player" + (i + 1) + "").append(cardHTML);
-		}
+		var selector = "#player" + (i+1) + " div.hand";
+		$(selector).append(cardHTML);
 
 
 	}
@@ -570,7 +533,7 @@ Game.prototype.checkTurnData = function() {
 	if (this.turnData.indexOf(0) === -1) {
 		var leader = this.turnData.indexOf("Leader");
 		this.turnData = [0,0,0,0];
-		this.turnData[leader] = ["Start"];
+		this.turnData[leader] = "Start";
 		alert("New Turn.  Player " + (leader+1) + " starts");
 		localGame.currentRule = "None";
 		localGame.lastPlayedHand = null;
