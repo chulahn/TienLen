@@ -108,7 +108,7 @@ socket.on('connect' , function() {
 		localGame.currentRule = d.cg.currentRule;
 
 		for (var j=0; j<localGame.lastPlayedHand.cards.length; j++) {
-			$('#player'+(i+1)+'>div')[0].remove();
+			$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
 		}
 
 		displayTurnData();
