@@ -32,27 +32,23 @@ var gameStarted = false;
 
 function emitEach(eventName, data) {
 	for (var j=0; j<4; j++) {
+		var currentSocket = io.sockets.sockets[j];
 
 		switch(eventName) {
 			case 'setUpPlayer':
+				io.to(currentSocket.id).emit(eventName, {playerData: j , updatedGame: cg});
+				break;
 			case 'reconnectGame':
-				var currentPlayer = io.sockets.sockets[j];
-				console.log('emitting ' + eventName + ' ' + currentPlayer.id)
-				io.to(currentPlayer.id).emit(eventName, {playerData: j , updatedGame: cg});
+
+				for (var k=0; k<cg.players.length; k++) {
+					var currentPlayer = cg.players[k];
+					if (currentSocket.id == currentPlayer.id) {
+						io.to(currentSocket.id).emit(eventName, {playerData: k , updatedGame: cg});
+					}
+				}
 				break;				
 		}
-
-		// if (eventName === ('setUpPlayer' || 'reconnectGame')) {
-			// return;
-		// }
-
-		// switch (eventName) {
-
-
-		// 	case "reconnectedGame" :
-		// 		io.
-		// }
-		// io.to(currentPlayer.id).emit(eventName, data);
+		console.log('emitting ' + eventName + ' ' + currentSocket.id)
 	};
 }
 
@@ -83,7 +79,7 @@ io.on('connection', function(socket) {
 		if (socketIds.length < 4) {
 			socketIds.push(socket.id);
 			var newConnected = missingPlayers.shift();
-			newConnected.id = socket.id;	
+			newConnected.id = socket.id;
 			players.push(newConnected); //push a Player object instead of object containing id and num
 			cg.players[newConnected.num] = newConnected; 
 			if (socketIds.length === 4) {
@@ -110,7 +106,7 @@ io.on('connection', function(socket) {
 		socketIds.splice(discPlayer,1);
 		console.log(socketIds.length + 'players. ' + discPlayer + " " + socket.id + ' has disconnected');
 
-		missingPlayers.push(players.splice(discPlayer,1));
+		missingPlayers.push(players.splice(discPlayer,1)[0]);
 		console.log(missingPlayers);
 		console.log('--------');
 
