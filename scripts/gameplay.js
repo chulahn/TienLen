@@ -34,11 +34,13 @@ socket.on('connect' , function() {
 		$('.card').addClass('other');
 		$('#player' + (thisPlayerIndex.toDivNum()) +' .card').removeClass('other');
 
+		hideOtherPlayer();
 
 		displayTurnData();
 	});
 
 	socket.on('reconnectGame', function(data) {
+		$('.activePlayer').removeClass();
 
 		localGame = new Game(data.updatedGame);
 		thisPlayerIndex = data.playerData;
@@ -56,7 +58,6 @@ socket.on('connect' , function() {
 
 
 		$('.card').remove();
-		$('.activePlayer').removeClass();
 		$('#lastPlayed').html(lastPlayedHand.createHTML());
 		if (lastPlayedHand.cards) {
 			$('#lastPlayed').append("by Player " + leaderDiv);
@@ -88,7 +89,7 @@ socket.on('connect' , function() {
 		console.log('displayNewRule')
 		$("#lastPlayed").html(d.lastPlayed);
 		$("#currentRule").html(d.currentRule);
-		highlightNextPlayer();
+		displayTurnData();
 
 	});
 
@@ -116,13 +117,13 @@ socket.on('connect' , function() {
 	});
 
 	socket.on('skipTurn', function(d) {
-		highlightNextPlayer();
 		localGame.turnData = d.cg.turnData;
 		localGame.currentPlayer = d.cg.currentPlayer;
+		console.log(d.newTurn);
 
 		$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum())
 		if (d.newTurn) {
-			var leader = this.turnData.indexOf("Start");
+			var leader = localGame.turnData.indexOf("Start");
 			alert("New Turn.  Player " + (leader+1) + " starts");
 			$('#currentRule').html("None");
 			$('#lastPlayed').html("");
@@ -212,7 +213,6 @@ $(document).on('click', '.btn.playCards', function() {
 			//Show Current Rule based on played cards.
 			localGame.currentRule = cardsToPlay.getType();
 			$("#currentRule").html(localGame.currentRule);
-			highlightNextPlayer();
 
 			//remove cards from player's Hand object(and servers) and player's div
 			thisPlayer.playCards();
@@ -239,33 +239,17 @@ $(document).on('click', '.btn.skipTurn', function() {
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
 	playerIndex = playerIndex.slice(playerIndex.length-1) - 1;
-
 	localGame.currentPlayer = localGame.currentPlayer.nextIndex();
 	localGame.setTurnData("Pass", playerIndex);
 
 	socket.emit('skipTurn', localGame);
 
-	highlightNextPlayer();
 
 	localGame.checkTurnData();
 	displayTurnData();
 	
 
 });
-
-function highlightNextPlayer() {
-	var currentPlayer = $('.activePlayer').attr('id');
-	currentPlayer = parseInt(currentPlayer.getLastChar());
-
-	var nextPlayer;
-	(currentPlayer !== 4) ? nextPlayer = currentPlayer + 1 : nextPlayer = 1; 
-
-	$('.activePlayer').removeClass('activePlayer');
-
-	$('#player' + nextPlayer).addClass('activePlayer');
-	$('#currentPlayersTurn').html(nextPlayer);
-
-}
 
 function displayTurnData() {
 	var turn = localGame.turnData;
@@ -276,8 +260,14 @@ function displayTurnData() {
 
 	for (var i=0; i<turn.length; i++) {
 
-		var li = "";
-		(i === thisPlayerIndex) ? li = "<li class='you'>" : li = "<li>";
+		var li = "<li class=' ";
+		if (i === thisPlayerIndex) {
+			li += "you ";
+		}
+		if (i === localGame.currentPlayer) {
+			li += "currentPlayer ";
+		}
+		li += "'>"
 
 		player += li + (i+1);
 		status += li + turn[i];
@@ -290,7 +280,24 @@ function displayTurnData() {
 
 	$('#turnData').html(dispHTML);
 
+	//hightlightNextPlayer
 	var cpDiv = localGame.currentPlayer.toDivNum(); 
 	$('#currentPlayersTurn').html(cpDiv);
+	$('.activePlayer').removeClass('activePlayer');
 	$("#player" + cpDiv).addClass("activePlayer");	
+}
+
+function hideOtherPlayer() {
+	var a = thisPlayerIndex.toDivNum();
+
+	$('.player').each(function() {
+		var curr = $(this);
+		var playerNum = curr.attr('id').getLastChar();
+		console.log(playerNum , a)
+
+		if (a != playerNum) {
+			curr.find('.btn').hide();
+		}
+	});
+
 }
