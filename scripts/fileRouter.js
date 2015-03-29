@@ -9,6 +9,10 @@ router.get('/scripts/gameplay.js', function(req, res) {
 	res.sendfile('./scripts/gameplay.js');
 });
 
+router.get('/scripts/socket.js', function(req, res) {
+	res.sendfile('./scripts/socket.js');
+});
+
 router.get('/style/style.css' , function(req, res) {
 	res.sendfile('./style/style.css');
 });

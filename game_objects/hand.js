@@ -212,7 +212,7 @@ Hand.prototype.createHTML = function() {
 		return cardHTML;
 	}
 	else {
-		return "Nothing";
+		return;
 	}
 }
 

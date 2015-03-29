@@ -36,14 +36,14 @@ function emitEach(eventName, data) {
 
 		switch(eventName) {
 			case 'setUpPlayer':
-				io.to(currentSocket.id).emit(eventName, {playerData: j , updatedGame: cg});
+				io.to(currentSocket.id).emit(eventName, {playerIndex: j , updatedGame: cg});
 				break;
 			case 'reconnectGame':
 
 				for (var k=0; k<cg.players.length; k++) {
 					var currentPlayer = cg.players[k];
 					if (currentSocket.id == currentPlayer.id) {
-						io.to(currentSocket.id).emit(eventName, {playerData: k , updatedGame: cg});
+						io.to(currentSocket.id).emit(eventName, {playerIndex: k , updatedGame: cg});
 					}
 				}
 				break;				
@@ -133,11 +133,11 @@ io.on('connection', function(socket) {
 	socket.on('playedCards', function(d) {
 
 		var i = cg.findPlayerIndex(d.updatedPlayer);
-		console.log('----player ' + (i+1) + ' played cards----')
-		console.log(cg.players[i].hand.cards.length)
+		console.log('----player ' + (i+1) + ' played cards----');
+		console.log('cards before ' + cg.players[i].hand.cards.length);
 		cg.players[i] = d.updatedPlayer;
 		cg.players[i].__proto__ = Player.prototype;
-		console.log(cg.players[i].hand.cards.length)
+		console.log('cards after ' + cg.players[i].hand.cards.length)
 
 		cg.lastPlayedHand = d.oldGame.lastPlayedHand;
 		cg.lastPlayedHand.__proto__ = Hand.prototype;
