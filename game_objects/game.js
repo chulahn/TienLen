@@ -97,10 +97,9 @@ Game.prototype.findStartingPlayer = function() {
 			if (currentCard.val === threeOfSpades.val) {
 				var playerNumber = (i+1);
 				console.log('found starting player ' + playerNumber);
-				// server.io.emit('foundStartingPlayer', playerNumber);
 
 				this.currentPlayer = i;
-				this.turnData[i] = "S";
+				this.turnData[i] = "Start";
 				this.currentRule = "Start";
 
 				return currentPlayer;

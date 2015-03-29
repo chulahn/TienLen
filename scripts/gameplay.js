@@ -76,11 +76,13 @@ $(document).on('click', '.btn.playCards', function() {
 			
 			//get the Cards that are going to be played, and create the HTML to display cards in lastPlayed Div
 			var cardsToRemove = selectedPlayer.find('.selected');
-			var lastPlayedHTML = "";
-			cardsToRemove.each(function() {
-				lastPlayedHTML += $(this)[0].outerHTML;
-			});
-			lastPlayedHTML = lastPlayedHTML.replace(new RegExp("selected" , "g"), "");
+
+
+			var lastPlayedHTML = cardsToPlay.createHTML();
+			// cardsToRemove.each(function() {
+			// 	lastPlayedHTML += $(this)[0].outerHTML;
+			// });
+			// lastPlayedHTML = lastPlayedHTML.replace(new RegExp("selected" , "g"), "");
 			lastPlayedHTML += "by Player " + (playerIndex + 1);
 			$("#lastPlayed").html(lastPlayedHTML);
 
@@ -110,16 +112,22 @@ $(document).on('click', '.btn.playCards', function() {
 $(document).on('click', '.btn.skipTurn', function() {
 	"use strict";
 
+	if (thisPlayerIndex === localGame.currentPlayer && (localGame.currentRule === "None" || localGame.currentRule === "Start")) {
+		alert('must Play a card');
+		return;
+	}
+
+
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
 	playerIndex = playerIndex.slice(playerIndex.length-1) - 1;
 	localGame.currentPlayer = localGame.currentPlayer.nextIndex();
 	localGame.setTurnData("Pass", playerIndex);
 
+	localGame.checkTurnData();
 	socket.emit('skipTurn', localGame);
 
 
-	localGame.checkTurnData();
 	displayGameData();
 	
 
@@ -172,7 +180,7 @@ function displayGameData() {
 	//display lastPlayedHand
 	if (lastPlayedHand.cards) {
 		var leaderDiv = localGame.leader.toDivNum();
-		$('#lastPlayed').html(lastPlayedHand.createHTML());
+		$('#lastPlayed').html(localGame.lastPlayedHand.createHTML());
 		$('#lastPlayed').append("by Player " + leaderDiv);
 	}
 

@@ -24,13 +24,6 @@ socket.on('connect' , function() {
 		displayGameData();
 	});
 
-	socket.on('foundStartingPlayer', function(playerNum) {
-		console.log('player ' + playerNum + ' starts');
-		$('#currentPlayersTurn').html(playerNum);
-		$("#player" + playerNum).addClass("activePlayer");		
-	});
-
-
 	socket.on('receiveLastPlayedHand', function(data) {
 		localGame.lastPlayedHand = new Hand(data);  
 		console.log('got last played hand ' + new Hand(data));
@@ -72,6 +65,7 @@ socket.on('connect' , function() {
 	socket.on('skipTurn', function(d) {
 		localGame.turnData = d.cg.turnData;
 		localGame.currentPlayer = d.cg.currentPlayer;
+		localGame.currentRule = d.cg.currentRule;
 		console.log(d.newTurn);
 
 		$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum())
