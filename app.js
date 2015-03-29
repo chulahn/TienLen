@@ -13,15 +13,11 @@ var io = exports.io = require('socket.io').listen(server);
 var fileRouter = require('./scripts/fileRouter.js');
 
 
-
-
 app.use('/', fileRouter);
 
 app.get('/', function(req, res) {
 	res.sendfile('index.html');
 });
-
-
 
 
 var cg = exports.currentGame;
@@ -80,8 +76,8 @@ io.on('connection', function(socket) {
 			socketIds.push(socket.id);
 			var newConnected = missingPlayers.shift();
 			newConnected.id = socket.id;
-			players.push(newConnected); //push a Player object instead of object containing id and num
-			cg.players[newConnected.num] = newConnected; 
+			players.push(newConnected); //push object containing id and num
+			cg.players[newConnected.num].id = newConnected.id; 
 			if (socketIds.length === 4) {
 				//update everyones game
 				console.log('reconnectingGame')
@@ -90,16 +86,6 @@ io.on('connection', function(socket) {
 		}
 
 	}
-
-	
-
-	socket.on('clickedCard', function(data) {
-		if (data !== undefined) {
-			cg.players[data.playerNum].selectedCards = data.selectedCards;
-			console.log('Player ' + data.playerNum+1);
-			console.log(cg.players[data.playerNum].selectedCards);
-		};
-	});
 
 	socket.on('disconnect', function() {
 		var discPlayer = socketIds.indexOf(socket.id);
@@ -117,6 +103,16 @@ io.on('connection', function(socket) {
 		}
 
 	});
+	
+
+	socket.on('clickedCard', function(data) {
+		if (data !== undefined) {
+			cg.players[data.playerNum].selectedCards = data.selectedCards;
+			console.log('Player ' + data.playerNum+1);
+			console.log(cg.players[data.playerNum].selectedCards);
+		};
+	});
+
 
 	socket.on('getGameData', function() {
 		socket.emit('receiveGameData', cg)

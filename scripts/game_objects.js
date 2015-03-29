@@ -395,7 +395,8 @@ Hand.prototype.createHTML = function() {
 		return cardHTML;
 	}
 	else {
-		return "Nothing";
+		console.log(this)
+		return "";
 	}
 }
 

@@ -3,58 +3,25 @@ socket.on('connect' , function() {
 
 	socket.on('setUpPlayer', function(data) {
 		console.log('settingup player');
-		localGame = new Game(data.updatedGame);
-		thisPlayerIndex = data.playerIndex;
-		thisPlayer = localGame.players[data.playerIndex];
-		lastPlayedHand = new Hand(localGame.lastPlayedHand);
-		currentRule = localGame.currentRule;
-		lastPlayedHand = localGame.lastPlayedHand;
+		updateLocal(data);
 		console.log('xxxxxxxxxfinished setting up')
 
-
-		$('#playerInfo').html(thisPlayerIndex.toDivNum())
-
-		//old socket on displayCards
 		$('.card').remove();
 		localGame.displayCards();
-		// $('.card').addClass('other');
-		// $('#player' + (thisPlayerIndex.toDivNum()) +' .card').removeClass('other');
 
 		hideOtherPlayer();
-
-		displayTurnData();
+		displayGameData();
 	});
 
 	socket.on('reconnectGame', function(data) {
-		$('.activePlayer').removeClass();
-
-		localGame = new Game(data.updatedGame);
-		thisPlayerIndex = data.playerIndex;
-		thisPlayer = localGame.players[data.playerIndex];
-		lastPlayedHand = new Hand(localGame.lastPlayedHand);
-		currentRule = localGame.currentRule;
-		lastPlayedHand = localGame.lastPlayedHand;
-		currentPlayer = localGame.currentPlayer;
-		leader = localGame.leader;
-
-
-		//div #
-		var currentPlayerDiv = currentPlayer.toDivNum();
-		var leaderDiv = leader.toDivNum();
-
+		updateLocal(data);
+		$('#playerInfo').html(thisPlayerIndex.toDivNum())
 
 		$('.card').remove();
-		$('#lastPlayed').html(lastPlayedHand.createHTML());
-		if (lastPlayedHand.cards) {
-			$('#lastPlayed').append("by Player " + leaderDiv);
-		}
 		localGame.displayCards();
-		$('.card').addClass('other');
-		$('#player' + (thisPlayerIndex + 1) + ' .card').removeClass('other');
-		$('#player' + currentPlayerDiv).addClass('activePlayer player');
-		$('#currentPlayersTurn').html(currentPlayerDiv);
-		$("#currentRule").html(currentRule);
-		displayTurnData();
+
+		hideOtherPlayer();
+		displayGameData();
 	});
 
 	socket.on('foundStartingPlayer', function(playerNum) {
@@ -75,7 +42,7 @@ socket.on('connect' , function() {
 		console.log('displayNewRule')
 		$("#lastPlayed").html(d.lastPlayed);
 		$("#currentRule").html(d.currentRule);
-		displayTurnData();
+		displayGameData();
 
 	});
 
@@ -98,7 +65,7 @@ socket.on('connect' , function() {
 			$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
 		}
 
-		displayTurnData();
+		displayGameData();
 
 	});
 
@@ -115,7 +82,18 @@ socket.on('connect' , function() {
 			$('#lastPlayed').html("");
 		}
 
-		displayTurnData();
+		displayGameData();
 
 	});
 });
+
+function updateLocal(newData) {
+	localGame = new Game(newData.updatedGame);
+	thisPlayerIndex = newData.playerIndex;
+	thisPlayer = localGame.players[newData.playerIndex];
+	lastPlayedHand = new Hand(localGame.lastPlayedHand);
+	currentRule = localGame.currentRule;
+	lastPlayedHand = localGame.lastPlayedHand;
+	currentPlayer = localGame.currentPlayer;
+	leader = localGame.leader;
+}

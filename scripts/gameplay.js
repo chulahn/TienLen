@@ -93,7 +93,7 @@ $(document).on('click', '.btn.playCards', function() {
 			console.log('successfully removed.  ', thisPlayer.hand.cards.length , ' cards left');
 			cardsToRemove.remove();
 			//NEED TO remove cards in other players screen
-			displayTurnData();
+			displayGameData();
 
 			
 
@@ -120,14 +120,14 @@ $(document).on('click', '.btn.skipTurn', function() {
 
 
 	localGame.checkTurnData();
-	displayTurnData();
+	displayGameData();
 	
 
 });
 
-function displayTurnData() {
+function displayGameData() {
+	//displays turnTable
 	var turn = localGame.turnData;
-
 	var dispHTML = "<div id='turnTable'>";
 	var player = "<ul><li class='index'>Player";
 	var status = "<ul><li class='index'>Status";
@@ -151,14 +151,35 @@ function displayTurnData() {
 	status += "</ul>";
 
 	dispHTML += player + status + "</div>";
-
 	$('#turnData').html(dispHTML);
 
-	//hightlightNextPlayer
+	//display currentRule
+	$("#currentRule").html(currentRule);
+
+
+	//display currentPlayer and thisPlayer's turn
+	$('#playerInfo').html(thisPlayerIndex.toDivNum())
 	var cpDiv = localGame.currentPlayer.toDivNum(); 
+	if (cpDiv === thisPlayerIndex.toDivNum()) {
+		cpDiv = "Your"
+	}
+	else {
+		cpDiv = "Player " + cpDiv + "'s";
+	}
 	$('#currentPlayersTurn').html(cpDiv);
+
+
+	//display lastPlayedHand
+	if (lastPlayedHand.cards) {
+		var leaderDiv = localGame.leader.toDivNum();
+		$('#lastPlayed').html(lastPlayedHand.createHTML());
+		$('#lastPlayed').append("by Player " + leaderDiv);
+	}
+
+
+	//highlightNextPlayer
 	$('.activePlayer').removeClass('activePlayer');
-	$("#player" + cpDiv).addClass("activePlayer");	
+	$("#player" + localGame.currentPlayer.toDivNum()).addClass("activePlayer");	
 }
 
 //hides other players buttons
