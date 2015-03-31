@@ -22,7 +22,7 @@ var Game = function(players) {
 	this.turnData = [0,0,0,0];
 
 	this.initialize(players);
-}
+};
 
 Game.prototype.findPlayerIndex = function(player) {
 	for (var i=0; i<this.players.length; i++) {
@@ -31,7 +31,7 @@ Game.prototype.findPlayerIndex = function(player) {
 			return i;
 		}
 	}
-}
+};
 
 Game.prototype.createDeck = function() {
 
@@ -43,7 +43,7 @@ Game.prototype.createDeck = function() {
 		}
 	}
 
-	console.log('deck created ' + this.deck.length)
+	console.log('deck created ' + this.deck.length);
 };
 
 Game.prototype.createPlayers = function(players) {
@@ -73,7 +73,7 @@ Game.prototype.dealCards = function() {
 
 		if (Math.floor(i/4) === 12) {
 			currentPlayer.hand = new Hand(currentPlayer.hand);
-			console.log('finished dealing cards for player ' + currentPlayer.id)
+			console.log('finished dealing cards for player ' + currentPlayer.id);
 		}
 	}
 	console.log('dealt all cards');
@@ -111,9 +111,9 @@ Game.prototype.findStartingPlayer = function() {
 Game.prototype.displayCards = function() {
 
 	var display = [];
-	console.log('display Cards')
+	console.log('display Cards');
 
-	for (var i=0; i<this.players.length ; i++) {
+	for (var i=0; i<this.players.length; i++) {
 
 		var currentPlayer = this.players[i];
 		var currentPlayersHand = currentPlayer.hand;
@@ -125,15 +125,15 @@ Game.prototype.displayCards = function() {
 		display.push(obj);
 	}
 
-	console.log('finished loop' , display.length)
+	console.log('finished loop' , display.length);
 
 	if (display.length === 4) {
 		console.log('emit displayCards');
 		for (var j=0; j<server.io.sockets.sockets.length; j++) {
-			var currentPlayer = server.io.sockets.sockets[j];
+			var currentSocket = server.io.sockets.sockets[j];
 
-			server.io.to(currentPlayer.id).emit('displayCards', {cards:display ,playerNum : j});
-		};
+			server.io.to(currentSocket.id).emit('displayCards', {cards:display ,playerNum : j});
+		}
 	}
 };
 
@@ -142,7 +142,7 @@ Game.prototype.setTurnData = function(action, playerInd) {
 		this.turnData = [0,0,0,0];
 	}
 	this.turnData[playerInd] = action;
-}
+};
 
 Game.prototype.checkTurnData = function() {
 	if (this.turnData.indexOf(0) === -1) {
@@ -158,6 +158,6 @@ Game.prototype.checkTurnData = function() {
 		// $('#lastPlayed').html("");
 	}
 	return false;
-}
+};
 
 module.exports = Game;

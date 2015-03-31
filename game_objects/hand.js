@@ -1,6 +1,17 @@
 var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
 var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
 
+Array.prototype.sortCards = function() {
+	var sorted = this.slice().sort(function (a,b) {
+		if (a.num === b.num) {
+			return (a.suit - b.suit);
+		} else {
+			return (a.num - b.num);
+		}
+	});
+	return sorted;
+}
+
 var Card = require('./card.js');
 //Hand object takes in array of Cards, or a single card, and organizes
 var Hand = function(cards) {
@@ -12,32 +23,24 @@ var Hand = function(cards) {
 	}
 	//cards is an Array of Card objects
 	this.cards = cards;
-	this.sortedCards = cards.slice().sort(function (a,b) {
-		if (a.num === b.num) {
-			return (a.suit - b.suit);
-		}
-		else {
-			return (a.num - b.num);
-		}
-	});
+	this.sortedCards = cards.sortCards();
 	this.getValue();
-}
+};
 
 //Returns index of the Card if in Hand, else -1
 //goes thru hand to find a card that matches input card value
 Hand.prototype.findCard = function(cardToFind) {
 	for (var i=0; i<this.cards.length; i++) {
 		var currentCard = this.cards[i];
+
 		if (i !== this.cards.length-1) {
 			if (currentCard.val === cardToFind.val) {
 				return i;
 			}
-		}
-		else {
+		} else {
 			if (currentCard.val === cardToFind.val) {
 				return i;
-			}
-			else {
+			} else {
 				return -1;
 			}
 		}
@@ -55,59 +58,45 @@ Hand.prototype.getType = function() {
 	var sortedCards = this.sortedCards;
 	if (sortedCards.length === 1) {
 		return "Single";
-	}
-
-	else {
+	} else {
 		for (var i=0; i<sortedCards.length; i++) {
+			
 			var currentCard = sortedCards[i];
 			if (i !== sortedCards.length-1) {
 				var nextCard = sortedCards[i+1];
 			}
 
 			if (sortedCards.length === 2) {
-				if (currentCard.num === nextCard.num) {
-					return "Doubles";
-				}
-
-				else {
-					return;
-				}
-			}
-
-			else if (sortedCards.length > 2) {
-				//triples, 4ofakind
+				var isDouble = (currentCard === nextCard.num) ? "Doubles" : undefined;
+				return isDouble;
+			} else if (sortedCards.length > 2) {
 				var numToMatch = currentCard.num;
-				if (i===0) {
-					var allCardsMatch = sortedCards.every(function(card) {
+				if (i === 0) {
+					//check for triples or 4 of a kind
+					var allCardsMatch = sortedCards.every(function (card) {
 						return (card.num === numToMatch);
 					});
 
 					if (allCardsMatch) {
 						if (sortedCards.length === 3) {
 							return "Triples";
-						}
-						else if (sortedCards.length === 4) {
+						} else if (sortedCards.length === 4) {
 							return "Bomb";
 						}
 					}
-				}
-
-				//check for straights
-				//did not reach end, check if next value is 1 more
-				else if (i !== sortedCards.length-1) {
+				} else if (i !== sortedCards.length-1) {
+					//return before reaching end if next card wasn't one more than prev
 					numToMatch = currentCard.num+1;
 					if (nextCard.num !== numToMatch) {
 						return;
 					}
-				}
-
-				else if (i === sortedCards.length-1) {
+				} else if (i === sortedCards.length-1) {
 					return "Straight " + sortedCards.length;
 				}
 			}
 		}
 	}
-}
+};
 
 //If Hand is Valid, gets Value, by getting Type and highest Card
 Hand.prototype.getValue = function() {
@@ -118,11 +107,10 @@ Hand.prototype.getValue = function() {
 		handVal.type = this.getType();
 		handVal.highest = cards[cards.length-1];
 		return handVal;
-	}
-	else {
+	} else {
 		handVal.type = "invalid";
 	}
-}
+};
 
 //If a Hand beats another Hand, returns true.
 //Checks if both Hands are valid and same Type.
@@ -138,7 +126,7 @@ Hand.prototype.beats = function(b) {
 			return (value === 1);
 		}
 	}
-}
+};
 
 //CHecks if Hand follows current rule.
 Hand.prototype.followsRule = function() {
@@ -147,25 +135,20 @@ Hand.prototype.followsRule = function() {
 
 	if (cr !== "Start" && cr !== "None") {
 		return (this.val.type === currentGame.currentRule);
-	}
-
-	else {
+	} else {
 		if (cr === "Start") {
 			var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
 
 			if (!(containsThreeOfSpades)) {
 				alert("Must have 3 of Spades in Starting Hand");
 			}
-
-			
 			return this.isValid() && containsThreeOfSpades;
-		}
-
-		else if (cr === "None") {
+		
+		} else if (cr === "None") {
 			return this.isValid();
 		}
 	}
-}
+};
 
 Hand.prototype.createHTML = function() {
 	cards = this.sortedCards;
@@ -210,10 +193,9 @@ Hand.prototype.createHTML = function() {
 		}
 
 		return cardHTML;
-	}
-	else {
+	} else {
 		return;
 	}
-}
+};
 
-module.exports = Hand
+module.exports = Hand;

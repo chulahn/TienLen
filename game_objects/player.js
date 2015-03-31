@@ -6,7 +6,7 @@ var Player = function(obj) {
 	this.num = obj.num;
 	this.hand = [];
 	this.selectedCards = [];
-}
+};
 
 //Removes selected cards from Players hand and plays them.
 //sets currentGame.Leader to this Player if true.
@@ -29,28 +29,19 @@ Player.prototype.playCards = function() {
 	//reset selected cards, re-sort cards
 	//set currentGame data(turnData, leader, and lastPlayed Hand)
 	if (cardsToPlay.followsRule() && cardsToPlay.beats(cg.lastPlayedHand)) {
-		console.log('beats rule')
+		console.log('beats rule');
 		cardsToPlay.cards.forEach(function (cardToRemove) {
 			var cardLocation = playersHand.findCard(cardToRemove);
 
 			if (cardLocation !== -1) {
 				playersHand.cards.splice(cardLocation,1);
-			}
-
-			else {
+			} else {
 				console.log('couldnt find ',cardToRemove.val)
 			}
 		});
 
 		this.selectedCards = [];
-		playersHand.sortedCards = playersHand.cards.slice().sort(function (a,b) {
-			if (a.num === b.num) {
-				return (a.suit - b.suit);
-			}
-			else {
-				return (a.num - b.num);
-			}
-		});
+		playersHand.sortedCards = playersHand.cards.sortCards();
 
 
 		//update sorted cards

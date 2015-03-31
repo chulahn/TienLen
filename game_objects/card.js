@@ -15,35 +15,30 @@ var Card = function (a, b) {
 		this.num = numValues.indexOf(thisNum);
 		this.suit = suitValues.indexOf(thisSuit);
 		this.val = a;
-	}
-	else {
+	} else {
 		this.num = a;
 		this.suit = b;
 		if ((a || b) !== -1) {
 			this.val = numValues[a] + ":" + suitValues[b];
 		}
 	}
-}
+};
 
 //compareTo checks Number first, then suit.
 Card.prototype.compareTo = function (b) {
 	if (this.num > b.num) {
 		return 1;
-	}
-	else if (this.num === b.num) {
+	} else if (this.num === b.num) {
 		if (this.suit > b. suit) {
 			return 1;
-		}
-		else if (this.suit === b.suit) {
+		} else if (this.suit === b.suit) {
 			return 0;
-		}
-		else {
+		} else {
 			return -1;
 		}
-	}
-	else {
+	} else {
 		return -1;
 	}
-}
+};
 	
 module.exports = Card;
