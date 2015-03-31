@@ -153,8 +153,8 @@ io.on('connection', function(socket) {
 	socket.on('skipTurn', function(localGame) {
 		cg.currentPlayer = localGame.currentPlayer;
 		cg.turnData = localGame.turnData;
-		var newTurn = cg.checkTurnData(); 
-		console.log(newTurn)
+		var newTurn = cg.checkTurnData();
+		if (newTurn) { cg.lastPlayedHand = null };
 		socket.broadcast.emit('skipTurn', {cg:cg, newTurn:newTurn});
 	});
 });

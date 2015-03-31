@@ -1,10 +1,10 @@
 socket.on('connect' , function() {
-	console.log(socket.id)
+	console.log(socket.id);
 
 	socket.on('setUpPlayer', function(data) {
 		console.log('settingup player');
 		updateLocal(data);
-		console.log('xxxxxxxxxfinished setting up')
+		console.log('xxxxxxxxxfinished setting up');
 
 		$('.card').remove();
 		localGame.displayCards();
@@ -15,7 +15,7 @@ socket.on('connect' , function() {
 
 	socket.on('reconnectGame', function(data) {
 		updateLocal(data);
-		$('#playerInfo').html(thisPlayerIndex.toDivNum())
+		$('#playerInfo').html(thisPlayerIndex.toDivNum());
 
 		$('.card').remove();
 		localGame.displayCards();
@@ -32,7 +32,7 @@ socket.on('connect' , function() {
 	//passed html to server to be shown on the other clients
 	socket.on('displayNewRule', function(d) {
 
-		console.log('displayNewRule')
+		console.log('displayNewRule');
 		$("#lastPlayed").html(d.lastPlayed);
 		$("#currentRule").html(d.currentRule);
 		displayGameData();
@@ -40,7 +40,7 @@ socket.on('connect' , function() {
 	});
 
 	socket.on('playedCards', function(d) {
-		console.log('a player played cards')
+		console.log('a player played cards');
 
 		var i = localGame.findPlayerIndex(d.updatedPlayer);
 		localGame.players[i] = new Player(d.updatedPlayer);
@@ -66,12 +66,12 @@ socket.on('connect' , function() {
 		localGame.turnData = d.cg.turnData;
 		localGame.currentPlayer = d.cg.currentPlayer;
 		localGame.currentRule = d.cg.currentRule;
-		console.log(d.newTurn);
 
-		$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum())
+		$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum());
 		if (d.newTurn) {
+			localGame.lastPlayedHand = lastPlayedHand = null;
 			var leader = localGame.turnData.indexOf("Start");
-			alert("New Turn.  Player " + (leader+1) + " starts");
+			alert("on skip New Turn.  Player " + (leader+1) + " starts");
 			$('#currentRule').html("None");
 			$('#lastPlayed').html("");
 		}

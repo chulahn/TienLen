@@ -36,7 +36,7 @@ Player.prototype.playCards = function() {
 			if (cardLocation !== -1) {
 				playersHand.cards.splice(cardLocation,1);
 			} else {
-				console.log('couldnt find ',cardToRemove.val)
+				console.log('couldnt find ',cardToRemove.val);
 			}
 		});
 

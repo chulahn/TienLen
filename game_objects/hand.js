@@ -10,7 +10,7 @@ Array.prototype.sortCards = function() {
 		}
 	});
 	return sorted;
-}
+};
 
 var Card = require('./card.js');
 //Hand object takes in array of Cards, or a single card, and organizes
@@ -38,11 +38,13 @@ Hand.prototype.findCard = function(cardToFind) {
 				return i;
 			}
 		} else {
-			if (currentCard.val === cardToFind.val) {
-				return i;
-			} else {
-				return -1;
-			}
+			var foundCard = (currentCard.val === cardToFind.val) ? i : -1;
+			return foundCard;
+			// if (currentCard.val === cardToFind.val) {
+			// 	return i;
+			// } else {
+			// 	return -1;
+			// }
 		}
 	}
 };
@@ -191,7 +193,6 @@ Hand.prototype.createHTML = function() {
 			cardHTML += "</div>";
 			cardHTML += "</div>";
 		}
-
 		return cardHTML;
 	} else {
 		return;

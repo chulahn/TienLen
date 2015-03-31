@@ -4,7 +4,16 @@ var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
 var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
 var currentGame;
 var socket = io.connect('http://localhost:3000');
-
+Array.prototype.sortCards = function() {
+	var sorted = this.slice().sort(function (a,b) {
+		if (a.num === b.num) {
+			return (a.suit - b.suit);
+		} else {
+			return (a.num - b.num);
+		}
+	});
+	return sorted;
+};
 //Card can take in a Card, a String, or two ints
 var Card = function (a, b) {
 	"use strict";
@@ -16,8 +25,7 @@ var Card = function (a, b) {
 			this.num = a.num;
 			this.suit = a.suit;
 			this.val = a.val;
-		}
-		else if (typeof a === "string" && a.length > 0) {	
+		} else if (typeof a === "string" && a.length > 0) {	
 			//console.log('Card Constructor String ' + a)	
 			
 			var divide = a.indexOf(":");
@@ -31,37 +39,32 @@ var Card = function (a, b) {
 			this.suit = suitValues.indexOf(thisSuit);
 			this.val = a;
 		}
-	}
-	//Pass in Two Ints.(0-12, 0-3)
-	else {
+	} else {
+		//Pass in Two Ints.(0-12, 0-3)
 		this.num = a;
 		this.suit = b;
 		if ((a || b) !== -1) {
 			this.val = numValues[a] + ":" + suitValues[b];
 		}
 	}
-}
+};
 
 //compareTo checks Number first, then suit.
 Card.prototype.compareTo = function (b) {
 	if (this.num > b.num) {
 		return 1;
-	}
-	else if (this.num === b.num) {
+	} else if (this.num === b.num) {
 		if (this.suit > b. suit) {
 			return 1;
-		}
-		else if (this.suit === b.suit) {
+		} else if (this.suit === b.suit) {
 			return 0;
-		}
-		else {
+		} else {
 			return -1;
 		}
-	}
-	else {
+	} else {
 		return -1;
 	}
-}
+};
 
 var threeOfSpades = new Card(0,0);
 
@@ -72,7 +75,7 @@ var Player = function(obj) {
 	this.num = obj.num;
 	this.hand = new Hand(obj.hand);
 	this.selectedCards = obj.selectedCards;
-}
+};
 
 //Removes selected cards from Players hand, resets selected Cards and re-sorts hand.
 //Sets turnData, and leader and currentPlayer indexes.
@@ -93,7 +96,7 @@ Player.prototype.playCards = function() {
 
 	if (cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
 
-		console.log('beats lastPlayedHand and valid')
+		console.log('beats lastPlayedHand and valid');
 		localGame.lastPlayedHand = cardsToPlay;
 		
 		//Removes played Cards and resorts.  Resets player's selectedCards
@@ -102,20 +105,12 @@ Player.prototype.playCards = function() {
 
 			if (cardLocation !== -1) {
 				playersHand.cards.splice(cardLocation,1);
+			} else {
+				console.log('couldnt find ',cardToRemove.val);
 			}
+		});
 
-			else {
-				console.log('couldnt find ',cardToRemove.val)
-			}
-		});
-		playersHand.sortedCards = playersHand.cards.slice().sort(function (a,b) {
-			if (a.num === b.num) {
-				return (a.suit - b.suit);
-			}
-			else {
-				return (a.num - b.num);
-			}
-		});
+		playersHand.sortedCards = playersHand.cards.sortCards();
 		this.selectedCards = [];
 
 
@@ -164,18 +159,9 @@ var Hand = function(cards) {
 			newCards.push(new Card(arr[i]));
 		}
 		this.cards = newCards;
-		this.sortedCards = this.cards.slice().sort(function (a,b) {
-			if (a.num === b.num) {
-				return (a.suit - b.suit);
-			}
-			else {
-				return (a.num - b.num);
-			}
-		});
+		this.sortedCards = this.cards.sortCards();
 		this.getValue();
-	}
-
-	else {
+	} else {
 		// console.log('Hand copy constructor');
 		var oldHand = cards;
 		if (oldHand.cards) {
@@ -184,23 +170,15 @@ var Hand = function(cards) {
 				newCards.push(new Card(oldHand.cards[i]));
 			}
 			this.cards = newCards;
-			this.sortedCards = this.cards.slice().sort(function (a,b) {
-				if (a.num === b.num) {
-					return (a.suit - b.suit);
-				}
-				else {
-					return (a.num - b.num);
-				}
-			});
+			this.sortedCards = this.cards.sortCards();
 			this.val = oldHand.val;
-		}
-		else {
-			console.log("Empty Hand")
+		} else {
+			console.log("Empty Hand");
 			return this;
 		}
 
 	}
-}
+};
 
 //Returns index of the Card if in Hand, else -1
 //goes thru hand to find a card that matches input card value
@@ -211,15 +189,10 @@ Hand.prototype.findCard = function(cardToFind) {
 			if (currentCard.val === cardToFind.val) {
 				return i;
 			}
-		}
-		//Last card
-		else {
-			if (currentCard.val === cardToFind.val) {
-				return i;
-			}
-			else {
-				return -1;
-			}
+		} else {
+			//Last card
+			var foundCard = (currentCard.val === cardToFind.val) ? i : -1;
+			return foundCard;
 		}
 	}
 };
@@ -237,9 +210,7 @@ Hand.prototype.getType = function() {
 	var sortedCards = this.sortedCards;
 	if (sortedCards.length === 1) {
 		return "Single";
-	}
-
-	else {
+	} else {
 		for (var i=0; i<sortedCards.length; i++) {
 			var currentCard = sortedCards[i];
 			//Get nextCard if not at the end
@@ -248,19 +219,12 @@ Hand.prototype.getType = function() {
 			}
 
 			if (sortedCards.length === 2) {
-				if (currentCard.num === nextCard.num) {
-					return "Doubles";
-				}
-
-				else {
-					return;
-				}
-			}
-
-			else if (sortedCards.length > 2) {
-				//triples, 4ofakind
+				var isDouble = (currentCard === nextCard.num) ? "Doubles" : undefined;
+				return isDouble;
+			} else if (sortedCards.length > 2) {
 				var numToMatch = currentCard.num;
 				if (i===0) {
+					//check for triples or 4 of a kind
 					var allCardsMatch = sortedCards.every(function(card) {
 						return (card.num === numToMatch);
 					});
@@ -268,30 +232,24 @@ Hand.prototype.getType = function() {
 					if (allCardsMatch) {
 						if (sortedCards.length === 3) {
 							return "Triples";
-						}
-						else if (sortedCards.length === 4) {
+						} else if (sortedCards.length === 4) {
 							return "Bomb";
 						}
 					}
-				}
-
-				//Check for straights
-				//Did not reach end, check if next card value is 1 more
-				else if (i !== sortedCards.length-1) {
+				} else if (i !== sortedCards.length-1) {
+					//return before reaching end if next card wasn't one more than prev
 					numToMatch = currentCard.num+1;
 					if (nextCard.num !== numToMatch) {
 						return;
 					}
-				}
-
-				//Finally reached end, is a Straight
-				else if (i === sortedCards.length-1) {
+				} else if (i === sortedCards.length-1) {
+					//Finally reached end, is a Straight
 					return "Straight " + sortedCards.length;
 				}
 			}
 		}
 	}
-}
+};
 
 //If Hand is Valid, gets Value, by getting Type and highest Card
 Hand.prototype.getValue = function() {
@@ -302,11 +260,10 @@ Hand.prototype.getValue = function() {
 		handVal.type = this.getType();
 		handVal.highest = cards[cards.length-1];
 		return handVal;
-	}
-	else {
+	} else {
 		handVal.type = "invalid";
 	}
-}
+};
 
 //If a Hand beats another Hand, returns true.
 //Checks if both Hands are valid and same Type.
@@ -322,7 +279,7 @@ Hand.prototype.beats = function(b) {
 			return (value === 1);
 		}
 	}
-}
+};
 
 //Checks if Hand follows current rule.
 Hand.prototype.followsRule = function() {
@@ -331,24 +288,19 @@ Hand.prototype.followsRule = function() {
 
 	if (cr !== "Start" && cr !== "None") {
 		return (this.val.type === localGame.currentRule);
-	}
-
-	else {
+	} else {
 		if (cr === "Start") {
 			var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
-
 			if (!(containsThreeOfSpades)) {
 				alert("Must have 3 of Spades in Starting Hand");
 			}
-
 			return this.isValid() && containsThreeOfSpades;
-		}
-
-		else if (cr === "None") {
+		
+		} else if (cr === "None") {
 			return this.isValid();
 		}
 	}
-}
+};
 
 Hand.prototype.createHTML = function() {
 	cards = this.sortedCards;
@@ -391,14 +343,12 @@ Hand.prototype.createHTML = function() {
 			cardHTML += "</div>";
 			cardHTML += "</div>";
 		}
-
 		return cardHTML;
-	}
-	else {
-		console.log(this)
+	} else {
+		console.log(this);
 		return "";
 	}
-}
+};
 
 var Game = function(oldGame) {
 
@@ -422,13 +372,11 @@ var Game = function(oldGame) {
 	this.lastPlayedHand = new Hand(oldGame.lastPlayedHand);
 	console.log('created lastPlayedHand---finished creating Game');
 	this.turnData = oldGame.turnData;
-}
+};
 
 
 Game.prototype.createDeck = function() {
-
 	this.deck = [];
-
 	for (var i=0; i<13; i++) {
 		for (var j=0; j<4; j++) {
 			this.deck.push(new Card(i, j));
@@ -437,9 +385,7 @@ Game.prototype.createDeck = function() {
 };
 
 Game.prototype.createPlayers = function() {
-
 	this.players = [];
-
 	for (var i=0; i<4; i++) {
 		var newPlayer = new Player();
 		this.players.push(newPlayer);
@@ -502,14 +448,11 @@ Game.prototype.findPlayerIndex = function(player) {
 			return i;
 		}
 	}
-}
+};
 
 Game.prototype.displayCards = function() {
 
 	for (var i=0; i<this.players.length ; i++) {
-
-		var currentPlayer = this.players[i];
-		var currentPlayersHand = currentPlayer.hand.cards;
 
 		var currentPlayer = this.players[i];
 		var currentPlayersHand = currentPlayer.hand;
@@ -518,8 +461,6 @@ Game.prototype.displayCards = function() {
 
 		var selector = "#player" + (i+1) + " div.hand";
 		$(selector).append(cardHTML);
-
-
 	}
 };
 
@@ -528,17 +469,17 @@ Game.prototype.setTurnData = function(action, playerInd) {
 		this.turnData = [0,0,0,0];
 	}
 	this.turnData[playerInd] = action;
-}
+};
 
 Game.prototype.checkTurnData = function() {
 	if (this.turnData.indexOf(0) === -1) {
 		var leader = this.turnData.indexOf("Leader");
 		this.turnData = [0,0,0,0];
 		this.turnData[leader] = "Start";
-		alert("New Turn.  Player " + (leader+1) + " starts");
-		localGame.currentRule = "None";
-		localGame.lastPlayedHand = null;
+		alert("checkTurn New Turn.  Player " + (leader+1) + " starts");
+		this.currentRule = "None";
+		this.lastPlayedHand = null;
 		$('#currentRule').html("None");
 		$('#lastPlayed').html("");
 	}
-}
+};
