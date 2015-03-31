@@ -45,12 +45,12 @@ $(document).on('click', '.btn.playCards', function() {
 	playerIndex = playerIndex.getLastChar() - 1;
 
 	var cardsToPlay = new Hand(thisPlayer.selectedCards);
-	console.log(cardsToPlay)
+	console.log(cardsToPlay);
 	
 	socket.emit('getGameData');
 
 	socket.on('receiveGameData', function(data) {
-		console.log('received gamedata')
+		console.log('received gamedata');
 		localGame = new Game(data);
 		thisPlayer = localGame.players[thisPlayerIndex];
 		// thisPlayer.selectedCards = cardsToPlay;
@@ -58,31 +58,26 @@ $(document).on('click', '.btn.playCards', function() {
 
 		//for first move
 		if (localGame.lastPlayedHand.val == undefined) {
-			console.log('lastplayedhand was null')
+			console.log('lastplayedhand was null');
 			var fakeHand = new Hand(thisPlayer.selectedCards);
 			fakeHand.val.highest = new Card(-1,-1);
-			console.log(fakeHand)
-			console.log(cardsToPlay)
-			console.log(fakeHand == cardsToPlay)
+			console.log(fakeHand);
+			console.log(cardsToPlay);
+			console.log(fakeHand == cardsToPlay);
 			localGame.lastPlayedHand = lastPlayedHand = fakeHand;
-		}
-		else {
+		} else {
 			lastPlayedHand = localGame.lastPlayedHand;
 			console.log(localGame.lastPlayedHand);
 		}
 
 		if (cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
-			console.log('follows rule and beats lastplayed')
+			console.log('follows rule and beats lastplayed');
 			
 			//get the Cards that are going to be played, and create the HTML to display cards in lastPlayed Div
 			var cardsToRemove = selectedPlayer.find('.selected');
 
 
 			var lastPlayedHTML = cardsToPlay.createHTML();
-			// cardsToRemove.each(function() {
-			// 	lastPlayedHTML += $(this)[0].outerHTML;
-			// });
-			// lastPlayedHTML = lastPlayedHTML.replace(new RegExp("selected" , "g"), "");
 			lastPlayedHTML += "by Player " + (playerIndex + 1);
 			$("#lastPlayed").html(lastPlayedHTML);
 
@@ -100,10 +95,8 @@ $(document).on('click', '.btn.playCards', function() {
 			
 
 			//Display changes to the other clients 
-			socket.emit('displayNewRule', {lastPlayed:lastPlayedHTML, currentRule: localGame.currentRule})
-		}
-
-		else {
+			socket.emit('displayNewRule', {lastPlayed:lastPlayedHTML, currentRule: localGame.currentRule});
+		} else {
 			console.log('cannot play these cards');
 		}	
 	});
@@ -124,13 +117,11 @@ $(document).on('click', '.btn.skipTurn', function() {
 	localGame.currentPlayer = localGame.currentPlayer.nextIndex();
 	localGame.setTurnData("Pass", playerIndex);
 
-	localGame.checkTurnData();
 	socket.emit('skipTurn', localGame);
+	localGame.checkTurnData();
 
 
 	displayGameData();
-	
-
 });
 
 function displayGameData() {
@@ -141,7 +132,6 @@ function displayGameData() {
 	var status = "<ul><li class='index'>Status";
 
 	for (var i=0; i<turn.length; i++) {
-
 		var li = "<li class=' ";
 		if (i === thisPlayerIndex) {
 			li += "you ";
@@ -149,7 +139,7 @@ function displayGameData() {
 		if (i === localGame.currentPlayer) {
 			li += "currentPlayer ";
 		}
-		li += "'>"
+		li += "'>";
 
 		player += li + (i+1);
 		status += li + turn[i];
@@ -162,26 +152,28 @@ function displayGameData() {
 	$('#turnData').html(dispHTML);
 
 	//display currentRule
-	$("#currentRule").html(currentRule);
+	$("#currentRule").html(localGame.currentRule);
 
 
 	//display currentPlayer and thisPlayer's turn
-	$('#playerInfo').html(thisPlayerIndex.toDivNum())
+	$('#playerInfo').html(thisPlayerIndex.toDivNum());
 	var cpDiv = localGame.currentPlayer.toDivNum(); 
-	if (cpDiv === thisPlayerIndex.toDivNum()) {
-		cpDiv = "Your"
-	}
-	else {
-		cpDiv = "Player " + cpDiv + "'s";
-	}
+	// if (cpDiv === thisPlayerIndex.toDivNum()) {
+	// 	cpDiv = "Your";
+	// } else {
+	// 	cpDiv = "Player " + cpDiv + "'s";
+	// }
+	(cpDiv === thisPlayerIndex.toDivNum()) ? cpDiv = "Your" : cpDiv = "Player " + cpDiv + "'s";
 	$('#currentPlayersTurn').html(cpDiv);
 
 
 	//display lastPlayedHand
-	if (lastPlayedHand.cards) {
+	if (lastPlayedHand && lastPlayedHand.cards) {
 		var leaderDiv = localGame.leader.toDivNum();
 		$('#lastPlayed').html(localGame.lastPlayedHand.createHTML());
 		$('#lastPlayed').append("by Player " + leaderDiv);
+	} else{
+		$('#lastPlayed').html("");
 	}
 
 
@@ -197,7 +189,7 @@ function hideOtherPlayer() {
 	$('.player').each(function() {
 		var curr = $(this);
 		var playerNum = curr.attr('id').getLastChar();
-		console.log(playerNum , a)
+		console.log(playerNum , a);
 
 		if (a != playerNum) {
 			curr.find('.btn').hide();
