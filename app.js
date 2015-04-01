@@ -122,10 +122,6 @@ io.on('connection', function(socket) {
 		socket.emit('sendLastPlayedHand', cg.lastPlayedHand);
 	});
 
-	socket.on('displayNewRule', function(d) {
-		socket.broadcast.emit('displayNewRule',d);
-	});
-
 	socket.on('playedCards', function(d) {
 
 		var i = cg.findPlayerIndex(d.updatedPlayer);

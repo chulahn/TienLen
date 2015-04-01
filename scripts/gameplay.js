@@ -20,17 +20,14 @@ $(document).on('click', '.card', function() {
 	clickedCard.toggleClass('selected');
 	console.log('clicked on card ', clickedCard.attr('alt'));
 
-
-	//get player
-	console.log(clickedCard);
-	var selectedPlayer = clickedCard.parent().parent().attr('id');
-	var playerNum = selectedPlayer.getLastChar() - 1;
-
-	//see if clicked card is already selected.
-	//Then add/remove
+	//create Card object of clickedCard and add/remove from player's selectedCards
 	var selectedCards = thisPlayer.selectedCards;
-	clickedCard = new Card(clickedCard.attr('alt'));
-	selectedCards.addRemoveCard(clickedCard);
+	var clickedCardObj = new Card(clickedCard.attr('alt'));
+	selectedCards.addRemoveCard(clickedCardObj);
+
+	//get playerNum so server knows which player to update
+	var selectedPlayer = clickedCard.closest('.player');
+	var playerNum = selectedPlayer.attr('id').getLastChar() - 1;
 
 	socket.emit('clickedCard', {selectedCards: selectedCards , playerNum : playerNum});
 });
@@ -41,8 +38,7 @@ $(document).on('click', '.btn.playCards', function() {
 
 	console.log('playCard');
 	var selectedPlayer = $(this).closest('.player');
-	var playerIndex = selectedPlayer.attr('id');
-	playerIndex = playerIndex.getLastChar() - 1;
+	var playerIndex = selectedPlayer.attr('id').getLastChar() - 1;
 
 	var cardsToPlay = new Hand(thisPlayer.selectedCards);
 	console.log(cardsToPlay);
@@ -56,46 +52,40 @@ $(document).on('click', '.btn.playCards', function() {
 		// thisPlayer.selectedCards = cardsToPlay;
 
 
-		//for first move
-		if (localGame.lastPlayedHand.val == undefined) {
-			console.log('lastplayedhand was null');
-			var fakeHand = new Hand(thisPlayer.selectedCards);
-			fakeHand.val.highest = new Card(-1,-1);
-			console.log(fakeHand);
-			console.log(cardsToPlay);
-			console.log(fakeHand == cardsToPlay);
-			localGame.lastPlayedHand = lastPlayedHand = fakeHand;
-		} else {
-			lastPlayedHand = localGame.lastPlayedHand;
-			console.log(localGame.lastPlayedHand);
+		function setLastPlayed() {
+
+			//If first move of a turn
+			//Create a fakeHand that has same type but a lower value
+			if (localGame.lastPlayedHand.val === undefined) {
+				console.log('No lastPlayedHand.val');
+				var fakeHand = new Hand(thisPlayer.selectedCards);
+				fakeHand.val.highest = new Card(-1,-1);
+				// console.log(fakeHand);
+				// console.log(cardsToPlay);
+				localGame.lastPlayedHand = lastPlayedHand = fakeHand;
+			} else {
+				lastPlayedHand = localGame.lastPlayedHand;
+				// console.log(localGame.lastPlayedHand);
+			}
 		}
 
+		setLastPlayed();
+		
+
 		if (cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
-			console.log('follows rule and beats lastplayed');
+			console.log('Gameplay:follows rule and beats lastplayed');
 			
-			//get the Cards that are going to be played, and create the HTML to display cards in lastPlayed Div
+
 			var cardsToRemove = selectedPlayer.find('.selected');
+			cardsToRemove.remove();
 
-
-			var lastPlayedHTML = cardsToPlay.createHTML();
-			lastPlayedHTML += "by Player " + (playerIndex + 1);
-			$("#lastPlayed").html(lastPlayedHTML);
-
-			//Show Current Rule based on played cards.
-			localGame.currentRule = cardsToPlay.getType();
-			$("#currentRule").html(localGame.currentRule);
-
-			//remove cards from player's Hand object(and servers) and player's div
+			//updates localGame and thisPlayer and then pushes changes to server to push to other players
 			thisPlayer.playCards();
 			console.log('successfully removed.  ', thisPlayer.hand.cards.length , ' cards left');
-			cardsToRemove.remove();
 			//NEED TO remove cards in other players screen
 			displayGameData();
 
 			
-
-			//Display changes to the other clients 
-			socket.emit('displayNewRule', {lastPlayed:lastPlayedHTML, currentRule: localGame.currentRule});
 		} else {
 			console.log('cannot play these cards');
 		}	
@@ -168,7 +158,7 @@ function displayGameData() {
 
 
 	//display lastPlayedHand
-	if (lastPlayedHand && lastPlayedHand.cards) {
+	if (localGame.lastPlayedHand && localGame.lastPlayedHand.cards) {
 		var leaderDiv = localGame.leader.toDivNum();
 		$('#lastPlayed').html(localGame.lastPlayedHand.createHTML());
 		$('#lastPlayed').append("by Player " + leaderDiv);

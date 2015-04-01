@@ -83,7 +83,7 @@ var Player = function(obj) {
 //Saves data locally and on server
 Player.prototype.playCards = function() {
 	"use strict";
-	var playersHand = this.hand;
+	var playerHand = this.hand;
 	var cardsToPlay = new Hand(this.selectedCards);
 
 	//repeated Code just in case
@@ -96,21 +96,22 @@ Player.prototype.playCards = function() {
 
 	if (cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
 
-		console.log('beats lastPlayedHand and valid');
+		console.log('Player:beats lastPlayedHand and valid');
 		localGame.lastPlayedHand = cardsToPlay;
+		localGame.currentRule = cardsToPlay.getType();
+
 		
-		//Removes played Cards and resorts.  Resets player's selectedCards
+		//Removes played Cards and re-sorts.  Resets player's selectedCards
 		cardsToPlay.cards.forEach(function (cardToRemove) {
-			var cardLocation = playersHand.findCard(cardToRemove);
+			var cardLocation = playerHand.findCard(cardToRemove);
 
 			if (cardLocation !== -1) {
-				playersHand.cards.splice(cardLocation,1);
+				playerHand.cards.splice(cardLocation,1);
 			} else {
 				console.log('couldnt find ',cardToRemove.val);
 			}
 		});
 
-		playersHand.sortedCards = playersHand.cards.sortCards();
 		this.selectedCards = [];
 
 
@@ -125,7 +126,7 @@ Player.prototype.playCards = function() {
 		socket.emit('playedCards', {oldGame : localGame, updatedPlayer : this});
 
 
-		if (playersHand.cards.length === 0) {
+		if (playerHand.cards.length === 0) {
 			//call game over function.  player 1
 			alert('Player ' , localGame.players.indexOf(this) , 'is the winner');
 		}
@@ -146,7 +147,7 @@ var Hand = function(cards) {
 		return this;
 	}
 	// called when initialized, or when no rule
-	if (cards == null) {
+	if (cards === null) {
 		// console.log('Null Hand');
 		return null;
 	}
@@ -199,7 +200,6 @@ Hand.prototype.findCard = function(cardToFind) {
 
 
 Hand.prototype.isValid = function() {
-	console.log(this);
 	return (this.val.type !== "invalid");
 };
 
@@ -219,7 +219,7 @@ Hand.prototype.getType = function() {
 			}
 
 			if (sortedCards.length === 2) {
-				var isDouble = (currentCard === nextCard.num) ? "Doubles" : undefined;
+				var isDouble = (currentCard.num === nextCard.num) ? "Doubles" : undefined;
 				return isDouble;
 			} else if (sortedCards.length > 2) {
 				var numToMatch = currentCard.num;

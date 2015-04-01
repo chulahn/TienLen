@@ -29,15 +29,6 @@ socket.on('connect' , function() {
 		console.log('got last played hand ' + new Hand(data));
 	});
 
-	//passed html to server to be shown on the other clients
-	socket.on('displayNewRule', function(d) {
-
-		console.log('displayNewRule');
-		$("#lastPlayed").html(d.lastPlayed);
-		$("#currentRule").html(d.currentRule);
-		displayGameData();
-
-	});
 
 	socket.on('playedCards', function(d) {
 		console.log('a player played cards');

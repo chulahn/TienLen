@@ -69,7 +69,7 @@ Hand.prototype.getType = function() {
 			}
 
 			if (sortedCards.length === 2) {
-				var isDouble = (currentCard === nextCard.num) ? "Doubles" : undefined;
+				var isDouble = (currentCard.num === nextCard.num) ? "Doubles" : undefined;
 				return isDouble;
 			} else if (sortedCards.length > 2) {
 				var numToMatch = currentCard.num;
