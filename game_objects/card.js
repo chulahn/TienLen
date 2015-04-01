@@ -8,7 +8,7 @@ var Card = function (a, b) {
 
 		var thisSuit = a.slice(divide+1);
 		var thisNum = a.slice(0,divide);
-		if (!(isNaN(parseInt(thisNum)))) {
+		if (!isNaN(parseInt(thisNum))) {
 			thisNum = parseInt(thisNum);
 		}
 

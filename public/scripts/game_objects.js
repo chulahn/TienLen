@@ -31,7 +31,7 @@ var Card = function (a, b) {
 			var divide = a.indexOf(":");
 			var thisSuit = a.slice(divide+1);
 			var thisNum = a.slice(0,divide);
-			if (!(isNaN(parseInt(thisNum)))) {
+			if (!isNaN(parseInt(thisNum))) {
 				thisNum = parseInt(thisNum);
 			}
 
@@ -292,7 +292,7 @@ Hand.prototype.followsRule = function() {
 	} else {
 		if (cr === "Start") {
 			var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
-			if (!(containsThreeOfSpades)) {
+			if (!containsThreeOfSpades) {
 				alert("Must have 3 of Spades in Starting Hand");
 			}
 			return this.isValid() && containsThreeOfSpades;

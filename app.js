@@ -9,14 +9,15 @@ var Game = require('./game_objects/game.js');
 var app = require('express')();
 var server = require('http').Server(app);
 var io = exports.io = require('socket.io').listen(server);
+var colors = require('colors');
 
-var fileRouter = require('./scripts/fileRouter.js');
+var fileRouter = require('./fileRouter.js');
 
 
 app.use('/', fileRouter);
 
 app.get('/', function(req, res) {
-	res.sendfile('index.html');
+	res.sendfile('public/index.html');
 });
 
 
@@ -44,8 +45,8 @@ function emitEach(eventName, data) {
 				}
 				break;				
 		}
-		console.log('emitting ' + eventName + ' ' + currentSocket.id)
-	};
+		console.log('emitting ' + eventName + ' ' + currentSocket.id);
+	}
 }
 
 io.on('connection', function(socket) {
@@ -54,7 +55,7 @@ io.on('connection', function(socket) {
 	console.log(connectedUsers + ' users' + '\n' + socket.id  + ' has connected');
 	
 	if (gameStarted === false) {
-		var newPlayer = {}
+		var newPlayer = {};
 		newPlayer.id = socket.id;
 		newPlayer.num = players.length;
 
@@ -63,7 +64,7 @@ io.on('connection', function(socket) {
 		players.push(newPlayer);
 
 		if (socketIds.length === 4) {
-			console.log('ready to start')
+			console.log('ready to start');
 			gameStarted = true;
 			cg = new Game(players);
 			cg.findStartingPlayer();
@@ -80,7 +81,7 @@ io.on('connection', function(socket) {
 			cg.players[newConnected.num].id = newConnected.id; 
 			if (socketIds.length === 4) {
 				//update everyones game
-				console.log('reconnectingGame')
+				console.log('reconnectingGame');
 				emitEach("reconnectGame");
 			}
 		}
@@ -97,7 +98,7 @@ io.on('connection', function(socket) {
 		console.log('--------');
 
 		if (socketIds.length === 0) {
-			console.log('no connections, deleting game')
+			console.log('no connections, deleting game');
 			missingPlayers = [];
 			gameStarted = false;
 		}
@@ -110,12 +111,12 @@ io.on('connection', function(socket) {
 			cg.players[data.playerNum].selectedCards = data.selectedCards;
 			console.log('Player ' + (data.playerNum+1));
 			console.log(cg.players[data.playerNum].selectedCards);
-		};
+		}
 	});
 
 
 	socket.on('getGameData', function() {
-		socket.emit('receiveGameData', cg)
+		socket.emit('receiveGameData', cg);
 	});
 
 	socket.on('playedCards', function(d) {
@@ -135,18 +136,16 @@ io.on('connection', function(socket) {
 		cg.turnData = d.oldGame.turnData;
 		cg.currentRule = d.oldGame.currentRule;
 		console.log('displaying turndata ', + cg.leader +" "+ cg.currentPlayer);
-		console.log('-----end played cards.  emitting to other players-----')
+		console.log('-----end played cards.  emitting to other players-----');
 
-		//NEED TO pass updated player to local
 		socket.broadcast.emit('playedCards', {cg: cg, updatedPlayer: d.updatedPlayer});
-
 	});
 
 	socket.on('skipTurn', function(localGame) {
 		cg.currentPlayer = localGame.currentPlayer;
 		cg.turnData = localGame.turnData;
 		var newTurn = cg.checkTurnData();
-		if (newTurn) { cg.lastPlayedHand = null };
+		if (newTurn) { cg.lastPlayedHand = null; }
 		socket.broadcast.emit('skipTurn', {cg:cg, newTurn:newTurn});
 	});
 });

@@ -39,7 +39,12 @@ socket.on('connect' , function() {
 		localGame.turnData = d.cg.turnData;
 		localGame.currentRule = d.cg.currentRule;
 
-		for (var j=0; j<localGame.lastPlayedHand.cards.length; j++) {
+		var cardsToRemove = localGame.lastPlayedHand.cards.length;
+		console.log ('cards to remove ' + cardsToRemove);
+		for (var j=0; j<cardsToRemove; j++) {
+			console.log(localGame.lastPlayedHand);
+			console.log('removing ' + (j+1));
+			console.log( '#player'+(i+1)+'>div.hand>div.card' + ' is selector');
 			$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
 		}
 

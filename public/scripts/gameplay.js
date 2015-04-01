@@ -15,8 +15,13 @@ $(document).ready(function() {
 //update player's selected hand
 $(document).on('click', '.card', function() {
 	"use strict";
-	//highlight DOM obj
+
 	var clickedCard = $(this);
+	var selectedPlayer = clickedCard.closest('.player');
+	var playerNum = selectedPlayer.attr('id').getLastChar() - 1;
+
+	if (playerNum !== thisPlayerIndex) { return ;}
+	//highlight DOM obj
 	clickedCard.toggleClass('selected');
 	console.log('clicked on card ', clickedCard.attr('alt'));
 
@@ -26,8 +31,7 @@ $(document).on('click', '.card', function() {
 	selectedCards.addRemoveCard(clickedCardObj);
 
 	//get playerNum so server knows which player to update
-	var selectedPlayer = clickedCard.closest('.player');
-	var playerNum = selectedPlayer.attr('id').getLastChar() - 1;
+	
 
 	socket.emit('clickedCard', {selectedCards: selectedCards , playerNum : playerNum});
 });
@@ -47,7 +51,7 @@ $(document).on('click', '.btn.playCards', function() {
 		console.log('received gamedata');
 		localGame = new Game(data);
 		thisPlayer = localGame.players[thisPlayerIndex];
-		cardsToPlay = new Hand(thisPlayer.selectedCards);
+		var cardsToPlay = new Hand(thisPlayer.selectedCards);
 		function setLastPlayed() {
 
 			//If first move of a turn
@@ -57,9 +61,6 @@ $(document).on('click', '.btn.playCards', function() {
 				var fakeHand = new Hand(thisPlayer.selectedCards);
 				fakeHand.val.highest = new Card(-1,-1);
 				localGame.lastPlayedHand = fakeHand;
-			} else {
-				localGame.lastPlayedHand;
-				// console.log(localGame.lastPlayedHand);
 			}
 		}
 		setLastPlayed();
@@ -73,16 +74,13 @@ $(document).on('click', '.btn.playCards', function() {
 				errorMessage += "Not your turn\n";
 			}
 
-			if ( !(cardsToPlay.followsRule()) ) {
+			if ( !cardsToPlay.followsRule() ) {
 				errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
 			}
 
-			if ( !(cardsToPlay.beats(localGame.lastPlayedHand)) ) {
+			if ( !cardsToPlay.beats(localGame.lastPlayedHand) ) {
 				errorMessage += "Hand does not beat last played Hand\n";
-				errorMessage += localGame.lastPlayedHand.val.type;
-				console.log(cardsToPlay);
-				console.log(localGame.lastPlayedHand);
-			}
+				}
 			alert(errorMessage);
 		}
 		
