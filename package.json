@@ -13,5 +13,10 @@
     "socket.io": "^1.3.5"
   },
   "author": "Chul Ahn",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "gulp-less": "^3.0.2",
+    "gulp-minify-css": "^1.0.0",
+    "livereload": "^0.3.6"
+  }
 }

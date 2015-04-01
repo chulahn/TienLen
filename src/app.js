@@ -13,11 +13,10 @@ var colors = require('colors');
 
 var fileRouter = require('./fileRouter.js');
 
-
 app.use('/', fileRouter);
 
 app.get('/', function(req, res) {
-	res.sendfile('public/index.html');
+	res.sendfile('./public/index.html');
 });
 
 
@@ -69,7 +68,6 @@ io.on('connection', function(socket) {
 			cg = new Game(players);
 			cg.findStartingPlayer();
 			emitEach('setUpPlayer');
-			// cg.displayCards();
 		}		
 	}
 	else {
@@ -116,6 +114,7 @@ io.on('connection', function(socket) {
 
 
 	socket.on('getGameData', function() {
+		console.log('someone requested gameData');
 		socket.emit('receiveGameData', cg);
 	});
 
@@ -149,8 +148,6 @@ io.on('connection', function(socket) {
 		socket.broadcast.emit('skipTurn', {cg:cg, newTurn:newTurn});
 	});
 });
-
-
 
 server.listen(3000, function() {
 	console.log('listening on :3000');

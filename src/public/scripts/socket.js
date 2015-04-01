@@ -41,10 +41,11 @@ socket.on('connect' , function() {
 
 		var cardsToRemove = localGame.lastPlayedHand.cards.length;
 		console.log ('cards to remove ' + cardsToRemove);
+		console.log( '#player'+(i+1)+'>div.hand>div.card' + ' is selector');
+		console.log(localGame.lastPlayedHand);
+
 		for (var j=0; j<cardsToRemove; j++) {
-			console.log(localGame.lastPlayedHand);
 			console.log('removing ' + (j+1));
-			console.log( '#player'+(i+1)+'>div.hand>div.card' + ' is selector');
 			$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
 		}
 

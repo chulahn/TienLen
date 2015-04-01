@@ -44,11 +44,11 @@ $(document).on('click', '.btn.playCards', function() {
 	var selectedPlayer = $(this).closest('.player');
 	var playerIndex = selectedPlayer.attr('id').getLastChar() - 1;
 
-
+	console.log('requestingGameData-');
 	socket.emit('getGameData');
 
 	socket.on('receiveGameData', function(data) {
-		console.log('received gamedata');
+		console.log('---received gamedata');
 		localGame = new Game(data);
 		thisPlayer = localGame.players[thisPlayerIndex];
 		var cardsToPlay = new Hand(thisPlayer.selectedCards);
@@ -87,21 +87,26 @@ $(document).on('click', '.btn.playCards', function() {
 		var isPlayersTurn = (thisPlayerIndex === localGame.currentPlayer);
 
 		if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
-			console.log('Gameplay:follows rule and beats lastplayed');
-			
+			console.log('Gameplay:follows rule and beats lastplayed');			
 
 			var cardsToRemove = selectedPlayer.find('.selected');
 			cardsToRemove.remove();
 
+			console.log('----------thisPlayer.playCards');
 			//updates localGame and thisPlayer and then pushes changes to server to push to other players
 			thisPlayer.playCards();
 
-
+			console.log('--------displayingGameData');
 			displayGameData();
+			console.log('----------------finished playCard----------')
 		} else {
 			displayError();
-		}	
+		}
+
 	});
+
+
+
 });
 
 $(document).on('click', '.btn.skipTurn', function() {
