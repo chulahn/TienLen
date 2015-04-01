@@ -40,17 +40,14 @@ $(document).on('click', '.btn.playCards', function() {
 	var selectedPlayer = $(this).closest('.player');
 	var playerIndex = selectedPlayer.attr('id').getLastChar() - 1;
 
-	var cardsToPlay = new Hand(thisPlayer.selectedCards);
-	console.log(cardsToPlay);
-	
+
 	socket.emit('getGameData');
 
 	socket.on('receiveGameData', function(data) {
 		console.log('received gamedata');
 		localGame = new Game(data);
 		thisPlayer = localGame.players[thisPlayerIndex];
-		// thisPlayer.selectedCards = cardsToPlay;
-
+		cardsToPlay = new Hand(thisPlayer.selectedCards);
 		function setLastPlayed() {
 
 			//If first move of a turn
@@ -59,11 +56,9 @@ $(document).on('click', '.btn.playCards', function() {
 				console.log('No lastPlayedHand.val');
 				var fakeHand = new Hand(thisPlayer.selectedCards);
 				fakeHand.val.highest = new Card(-1,-1);
-				// console.log(fakeHand);
-				// console.log(cardsToPlay);
-				localGame.lastPlayedHand = lastPlayedHand = fakeHand;
+				localGame.lastPlayedHand = fakeHand;
 			} else {
-				lastPlayedHand = localGame.lastPlayedHand;
+				localGame.lastPlayedHand;
 				// console.log(localGame.lastPlayedHand);
 			}
 		}
@@ -82,15 +77,18 @@ $(document).on('click', '.btn.playCards', function() {
 				errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
 			}
 
-			if ( !(cardsToPlay.beats(lastPlayedHand)) ) {
+			if ( !(cardsToPlay.beats(localGame.lastPlayedHand)) ) {
 				errorMessage += "Hand does not beat last played Hand\n";
+				errorMessage += localGame.lastPlayedHand.val.type;
+				console.log(cardsToPlay);
+				console.log(localGame.lastPlayedHand);
 			}
 			alert(errorMessage);
 		}
 		
 		var isPlayersTurn = (thisPlayerIndex === localGame.currentPlayer);
 
-		if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
+		if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
 			console.log('Gameplay:follows rule and beats lastplayed');
 			
 
@@ -99,7 +97,7 @@ $(document).on('click', '.btn.playCards', function() {
 
 			//updates localGame and thisPlayer and then pushes changes to server to push to other players
 			thisPlayer.playCards();
-			console.log('successfully removed.  ', thisPlayer.hand.cards.length , ' cards left');
+
 
 			displayGameData();
 		} else {
@@ -190,7 +188,6 @@ function hideOtherPlayer() {
 	$('.player').each(function() {
 		var curr = $(this);
 		var playerNum = curr.attr('id').getLastChar();
-		console.log(playerNum , a);
 
 		if (a != playerNum) {
 			curr.find('.btn').hide();

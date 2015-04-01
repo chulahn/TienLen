@@ -140,8 +140,8 @@ Player.prototype.playCards = function() {
 var Hand = function(cards) {
 	"use strict";
 	if (cards instanceof Object && cards.cards === undefined && cards.val !== undefined && cards.length === undefined) {
-		console.log('Hand constructor, single Card');
-		console.log(cards);
+		// console.log('Hand constructor, single Card');
+		// console.log(cards);
 		var a = [];
 		a.push(cards);
 		cards = a;
@@ -473,6 +473,7 @@ Game.prototype.setTurnData = function(action, playerInd) {
 };
 
 Game.prototype.checkTurnData = function() {
+	console.log(this.turnData)
 	if (this.turnData.indexOf(0) === -1) {
 		var leader = this.turnData.indexOf("Leader");
 		this.turnData = [0,0,0,0];

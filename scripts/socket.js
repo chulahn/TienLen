@@ -1,5 +1,5 @@
 socket.on('connect' , function() {
-	console.log(socket.id);
+	console.log("Your socket.id is " + socket.id);
 
 	socket.on('setUpPlayer', function(data) {
 		console.log('settingup player');
@@ -24,18 +24,12 @@ socket.on('connect' , function() {
 		displayGameData();
 	});
 
-	socket.on('receiveLastPlayedHand', function(data) {
-		localGame.lastPlayedHand = new Hand(data);  
-		console.log('got last played hand ' + new Hand(data));
-	});
-
-
 	socket.on('playedCards', function(d) {
-		console.log('a player played cards');
 
 		var i = localGame.findPlayerIndex(d.updatedPlayer);
 		localGame.players[i] = new Player(d.updatedPlayer);
 
+		console.log('player ' + (i+1) + ' played cards');
 
 
 		//NEED TO update players
@@ -66,7 +60,6 @@ socket.on('connect' , function() {
 			$('#currentRule').html("None");
 			$('#lastPlayed').html("");
 		}
-
 		displayGameData();
 
 	});

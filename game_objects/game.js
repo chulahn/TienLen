@@ -27,7 +27,7 @@ var Game = function(players) {
 Game.prototype.findPlayerIndex = function(player) {
 	for (var i=0; i<this.players.length; i++) {
 		if (this.players[i].id === player.id) {
-			console.log('index ' + i);
+			console.log('Found player at index ' + i);
 			return i;
 		}
 	}
@@ -87,7 +87,6 @@ Game.prototype.initialize = function(players) {
 };
 
 Game.prototype.findStartingPlayer = function() {
-	console.log("looking for starting player");
 	for (var i=0; i< this.players.length; i++) {
 		var currentPlayer = this.players[i];
 
@@ -146,6 +145,7 @@ Game.prototype.setTurnData = function(action, playerInd) {
 
 Game.prototype.checkTurnData = function() {
 	if (this.turnData.indexOf(0) === -1) {
+		console.log("new Turn")
 		var leader = this.turnData.indexOf("Leader");
 		this.turnData = [0,0,0,0];
 		this.turnData[leader] = "Start";
@@ -153,9 +153,6 @@ Game.prototype.checkTurnData = function() {
 		this.currentRule = "None";
 		this.lastPlayedHand = null;
 		return true;
-		// alert("New Turn.  Player " + (leader+1) + " starts");
-		// $('#currentRule').html("None");
-		// $('#lastPlayed').html("");
 	}
 	return false;
 };

@@ -108,7 +108,7 @@ io.on('connection', function(socket) {
 	socket.on('clickedCard', function(data) {
 		if (data !== undefined) {
 			cg.players[data.playerNum].selectedCards = data.selectedCards;
-			console.log('Player ' + data.playerNum+1);
+			console.log('Player ' + (data.playerNum+1));
 			console.log(cg.players[data.playerNum].selectedCards);
 		};
 	});
@@ -118,18 +118,14 @@ io.on('connection', function(socket) {
 		socket.emit('receiveGameData', cg)
 	});
 
-	socket.on('getLastPlayedHand', function() {
-		socket.emit('sendLastPlayedHand', cg.lastPlayedHand);
-	});
-
 	socket.on('playedCards', function(d) {
 
 		var i = cg.findPlayerIndex(d.updatedPlayer);
 		console.log('----player ' + (i+1) + ' played cards----');
-		console.log('cards before ' + cg.players[i].hand.cards.length);
+
 		cg.players[i] = d.updatedPlayer;
 		cg.players[i].__proto__ = Player.prototype;
-		console.log('cards after ' + cg.players[i].hand.cards.length)
+
 
 		cg.lastPlayedHand = d.oldGame.lastPlayedHand;
 		cg.lastPlayedHand.__proto__ = Hand.prototype;
