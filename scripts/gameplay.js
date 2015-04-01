@@ -51,7 +51,6 @@ $(document).on('click', '.btn.playCards', function() {
 		thisPlayer = localGame.players[thisPlayerIndex];
 		// thisPlayer.selectedCards = cardsToPlay;
 
-
 		function setLastPlayed() {
 
 			//If first move of a turn
@@ -68,11 +67,30 @@ $(document).on('click', '.btn.playCards', function() {
 				// console.log(localGame.lastPlayedHand);
 			}
 		}
-
 		setLastPlayed();
-		
 
-		if (cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
+
+		function displayError() {
+
+			var errorMessage = "";
+
+			if ( thisPlayerIndex !== localGame.currentPlayer ) {
+				errorMessage += "Not your turn\n";
+			}
+
+			if ( !(cardsToPlay.followsRule()) ) {
+				errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
+			}
+
+			if ( !(cardsToPlay.beats(lastPlayedHand)) ) {
+				errorMessage += "Hand does not beat last played Hand\n";
+			}
+			alert(errorMessage);
+		}
+		
+		var isPlayersTurn = (thisPlayerIndex === localGame.currentPlayer);
+
+		if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(lastPlayedHand)) {
 			console.log('Gameplay:follows rule and beats lastplayed');
 			
 
@@ -82,12 +100,10 @@ $(document).on('click', '.btn.playCards', function() {
 			//updates localGame and thisPlayer and then pushes changes to server to push to other players
 			thisPlayer.playCards();
 			console.log('successfully removed.  ', thisPlayer.hand.cards.length , ' cards left');
-			//NEED TO remove cards in other players screen
-			displayGameData();
 
-			
+			displayGameData();
 		} else {
-			console.log('cannot play these cards');
+			displayError();
 		}	
 	});
 });
@@ -148,11 +164,6 @@ function displayGameData() {
 	//display currentPlayer and thisPlayer's turn
 	$('#playerInfo').html(thisPlayerIndex.toDivNum());
 	var cpDiv = localGame.currentPlayer.toDivNum(); 
-	// if (cpDiv === thisPlayerIndex.toDivNum()) {
-	// 	cpDiv = "Your";
-	// } else {
-	// 	cpDiv = "Player " + cpDiv + "'s";
-	// }
 	(cpDiv === thisPlayerIndex.toDivNum()) ? cpDiv = "Your" : cpDiv = "Player " + cpDiv + "'s";
 	$('#currentPlayersTurn').html(cpDiv);
 
@@ -162,7 +173,7 @@ function displayGameData() {
 		var leaderDiv = localGame.leader.toDivNum();
 		$('#lastPlayed').html(localGame.lastPlayedHand.createHTML());
 		$('#lastPlayed').append("by Player " + leaderDiv);
-	} else{
+	} else {
 		$('#lastPlayed').html("");
 	}
 

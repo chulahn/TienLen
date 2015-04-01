@@ -112,6 +112,7 @@ Player.prototype.playCards = function() {
 			}
 		});
 
+		playerHand.sortedCards = playerHand.cards.sortCards();
 		this.selectedCards = [];
 
 
@@ -167,8 +168,8 @@ var Hand = function(cards) {
 		var oldHand = cards;
 		if (oldHand.cards) {
 			var newCards = [];
-			for (var i=0; i<oldHand.cards.length; i++) {
-				newCards.push(new Card(oldHand.cards[i]));
+			for (var j=0; j<oldHand.cards.length; j++) {
+				newCards.push(new Card(oldHand.cards[j]));
 			}
 			this.cards = newCards;
 			this.sortedCards = this.cards.sortCards();

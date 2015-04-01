@@ -46,10 +46,9 @@
 		//when changings a players index to div num
 		Number.prototype.toDivNum = function() {
 			return this+1;
-			// return (this == 4 ? 0 : this + 1);
 		}
 
-		//when getting next index
+		//when getting next index in Game.players array
 		Number.prototype.nextIndex = function() {
 			return (this != 3 ? this + 1 : 0)
 		}
