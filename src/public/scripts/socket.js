@@ -16,7 +16,7 @@ socket.on('connect' , function() {
 	socket.on('reconnectGame', function(data) {
 		updateLocal(data);
 		$('#playerInfo').html(thisPlayerIndex.toDivNum());
-
+		$('.btn').show();
 		$('.card').remove();
 		localGame.displayCards();
 
@@ -53,22 +53,86 @@ socket.on('connect' , function() {
 
 	});
 
-	socket.on('skipTurn', function(d) {
-		localGame.turnData = d.cg.turnData;
-		localGame.currentPlayer = d.cg.currentPlayer;
-		localGame.currentRule = d.cg.currentRule;
+	socket.on('receiveGameData', function(data) {
+		console.log(socket.id + '---received gamedata');
+		localGame = new Game(data);
+		thisPlayer = localGame.players[thisPlayerIndex];
+		var cardsToPlay = new Hand(thisPlayer.selectedCards);
 
-		$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum());
-		if (d.newTurn) {
-			localGame.lastPlayedHand = lastPlayedHand = null;
-			var leader = localGame.turnData.indexOf("Start");
-			alert("on skip New Turn.  Player " + (leader+1) + " starts");
-			$('#currentRule').html("None");
-			$('#lastPlayed').html("");
+		if (localGame.lastPlayedHand.val === undefined) { createFakeHand(); }
+
+		function createFakeHand() {
+
+			//If first move of a turn
+			//Create a fakeHand that has same type but a lower value
+			console.log('No lastPlayedHand.val');
+			var fakeHand = new Hand(thisPlayer.selectedCards);
+			fakeHand.val.highest = new Card(-1,-1);
+			localGame.lastPlayedHand = fakeHand;
 		}
-		displayGameData();
+
+
+		function displayError() {
+
+			var errorMessage = "";
+
+			if ( thisPlayerIndex !== localGame.currentPlayer ) {
+				errorMessage += "Not your turn\n";
+			}
+
+			if ( !cardsToPlay.followsRule() ) {
+				errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
+			}
+
+			if ( !cardsToPlay.beats(localGame.lastPlayedHand) ) {
+				errorMessage += "Hand does not beat last played Hand\n";
+				}
+			alert(errorMessage);
+		}
+		
+		var isPlayersTurn = (thisPlayerIndex === localGame.currentPlayer);
+
+		if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
+			console.log('Gameplay:follows rule and beats lastplayed');			
+
+			var selectedPlayer = $('#player' + thisPlayerIndex.toDivNum());
+			var cardsToRemove = selectedPlayer.find('.selected');
+			cardsToRemove.remove();
+
+			console.log('----------thisPlayer.playCards');
+			//updates localGame and thisPlayer and then pushes changes to server to push to other players
+			thisPlayer.playCards();
+
+			console.log('--------displayingGameData');
+			displayGameData();
+		} else {
+			displayError();
+		}
+		console.log('----------------finished playCard----------');
 
 	});
+
+
+
+
+});
+
+socket.on('skipTurn', function(d) {
+	localGame.turnData = d.cg.turnData;
+	localGame.currentPlayer = d.cg.currentPlayer;
+	localGame.currentRule = d.cg.currentRule;
+	console.log(socket.id + ' skippedTurn')
+
+	$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum());
+	if (d.newTurn) {
+		localGame.lastPlayedHand = lastPlayedHand = null;
+		var leader = localGame.turnData.indexOf("Start");
+		alert("onEmit skip New Turn.  Player " + (leader+1) + " starts.  This is Player " + thisPlayerIndex);
+		$('#currentRule').html("None");
+		$('#lastPlayed').html("");
+	}
+	displayGameData();
+
 });
 
 function updateLocal(newData) {

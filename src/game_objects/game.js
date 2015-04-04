@@ -145,7 +145,6 @@ Game.prototype = {
 
 	checkTurnData: function() {
 		if (this.turnData.indexOf(0) === -1) {
-			console.log("new Turn");
 			var leader = this.turnData.indexOf("Leader");
 			this.turnData = [0,0,0,0];
 			this.turnData[leader] = "Start";

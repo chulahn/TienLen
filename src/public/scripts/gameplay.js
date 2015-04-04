@@ -1,5 +1,4 @@
 var socket = io.connect('http://localhost:3000');
-
 var thisPlayerIndex;
 var thisPlayer;
 var lastPlayedHand;
@@ -40,71 +39,15 @@ $(document).on('click', '.btn.playCards', function() {
 
 	"use strict";
 
+	if (localGame.currentPlayer !== thisPlayerIndex) { return alert('not your turn'); }
+
 	console.log('playCard');
-	var selectedPlayer = $(this).closest('.player');
-	var playerIndex = selectedPlayer.attr('id').getLastChar() - 1;
+	// var selectedPlayer = $(this).closest('.player');
+	// var playerIndex = selectedPlayer.attr('id').getLastChar() - 1;
 
 	console.log('requestingGameData-');
+	//after here receiveGameData is called twice
 	socket.emit('getGameData');
-
-	socket.on('receiveGameData', function(data) {
-		console.log('---received gamedata');
-		localGame = new Game(data);
-		thisPlayer = localGame.players[thisPlayerIndex];
-		var cardsToPlay = new Hand(thisPlayer.selectedCards);
-		function setLastPlayed() {
-
-			//If first move of a turn
-			//Create a fakeHand that has same type but a lower value
-			if (localGame.lastPlayedHand.val === undefined) {
-				console.log('No lastPlayedHand.val');
-				var fakeHand = new Hand(thisPlayer.selectedCards);
-				fakeHand.val.highest = new Card(-1,-1);
-				localGame.lastPlayedHand = fakeHand;
-			}
-		}
-		setLastPlayed();
-
-
-		function displayError() {
-
-			var errorMessage = "";
-
-			if ( thisPlayerIndex !== localGame.currentPlayer ) {
-				errorMessage += "Not your turn\n";
-			}
-
-			if ( !cardsToPlay.followsRule() ) {
-				errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
-			}
-
-			if ( !cardsToPlay.beats(localGame.lastPlayedHand) ) {
-				errorMessage += "Hand does not beat last played Hand\n";
-				}
-			alert(errorMessage);
-		}
-		
-		var isPlayersTurn = (thisPlayerIndex === localGame.currentPlayer);
-
-		if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
-			console.log('Gameplay:follows rule and beats lastplayed');			
-
-			var cardsToRemove = selectedPlayer.find('.selected');
-			cardsToRemove.remove();
-
-			console.log('----------thisPlayer.playCards');
-			//updates localGame and thisPlayer and then pushes changes to server to push to other players
-			thisPlayer.playCards();
-
-			console.log('--------displayingGameData');
-			displayGameData();
-			console.log('----------------finished playCard----------')
-		} else {
-			displayError();
-		}
-
-	});
-
 
 
 });
@@ -117,6 +60,9 @@ $(document).on('click', '.btn.skipTurn', function() {
 		return;
 	}
 
+
+
+	if (localGame.currentPlayer !== thisPlayerIndex) { return alert('not your turn'); }
 
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
@@ -187,11 +133,11 @@ function displayGameData() {
 //hides other players buttons
 function hideOtherPlayer() {
 	var a = thisPlayerIndex.toDivNum();
+	$('.btn').show();
 
 	$('.player').each(function() {
 		var curr = $(this);
 		var playerNum = curr.attr('id').getLastChar();
-
 		if (a != playerNum) {
 			curr.find('.btn').hide();
 			curr.find('.card').addClass('other');

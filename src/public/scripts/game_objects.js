@@ -3,7 +3,6 @@
 var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
 var suitValues = ["Spade", "Clover", "Diamond", "Heart"];
 var currentGame;
-var socket = io.connect('http://localhost:3000');
 Array.prototype.sortCards = function() {
 	var sorted = this.slice().sort(function (a,b) {
 		if (a.num === b.num) {
@@ -122,9 +121,9 @@ Player.prototype.playCards = function() {
 		// (l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
 		localGame.setTurnData("Leader", l);
 
-
+		console.log('=====emitting play cards');
 		//Updates server's data 		
-		socket.emit('playedCards', {oldGame : localGame, updatedPlayer : this});
+		socket.emit('playCards', {oldGame : localGame, updatedPlayer : this});
 
 
 		if (playerHand.cards.length === 0) {

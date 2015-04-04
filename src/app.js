@@ -114,14 +114,14 @@ io.on('connection', function(socket) {
 
 
 	socket.on('getGameData', function() {
-		console.log('someone requested gameData');
-		socket.emit('receiveGameData', cg);
+		console.log(socket.id + ' requested gameData-------'.green);
+		io.to(socket.id).emit('receiveGameData', cg);
+		console.log('sentData'.red);
 	});
 
-	socket.on('playedCards', function(d) {
-
+	socket.on('playCards', function(d) {
 		var i = cg.findPlayerIndex(d.updatedPlayer);
-		console.log('----player ' + (i+1) + ' played cards----');
+		console.log('----player ' + (i+1) + socket.id + ' played cards----'.green);
 
 		cg.players[i] = d.updatedPlayer;
 		cg.players[i].__proto__ = Player.prototype;
@@ -134,17 +134,18 @@ io.on('connection', function(socket) {
 		cg.currentPlayer = d.oldGame.currentPlayer;
 		cg.turnData = d.oldGame.turnData;
 		cg.currentRule = d.oldGame.currentRule;
-		console.log('displaying turndata ', + cg.leader +" "+ cg.currentPlayer);
-		console.log('-----end played cards.  emitting to other players-----');
+		console.log('displaying turndata.  Leader is now ', + cg.leader +" Current player:" + cg.currentPlayer);
+		console.log('-----end played cards.  emitting to other players-----'.red);
 
 		socket.broadcast.emit('playedCards', {cg: cg, updatedPlayer: d.updatedPlayer});
 	});
 
 	socket.on('skipTurn', function(localGame) {
+		console.log('skipped turn'.yellow + socket.id + ' skipped turn'.yellow);	
 		cg.currentPlayer = localGame.currentPlayer;
 		cg.turnData = localGame.turnData;
 		var newTurn = cg.checkTurnData();
-		if (newTurn) { cg.lastPlayedHand = null; }
+		if (newTurn) { console.log('newTurn'.yellow); }
 		socket.broadcast.emit('skipTurn', {cg:cg, newTurn:newTurn});
 	});
 });
