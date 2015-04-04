@@ -1,10 +1,10 @@
 var gulp = require('gulp');
 
-
 var less = require('gulp-less');
 var minifyCss = require('gulp-minify-css');
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
+var livereload = require('gulp-livereload');
 
 
 gulp.task('css', function() {
@@ -34,21 +34,24 @@ gulp.task('js', function() {
 
 gulp.task('default', ['css' , 'js'], function() {
 
-	gulp.watch('./src/style/css/style.less', function() {
-		gulp.run('css');
-	});
+	// gulp.watch('./src/style/css/style.less', function() {
+	// 	gulp.run('css');
+	// });
 
-	gulp.watch('./src/*.js', function() {
-		gulp.run('js');
-	});
+	// gulp.watch('./src/**/*.js', function() {
+	// 	gulp.run('js');
+	// });
 
-	gulp.watch('./src/public/scripts/*.js', function() {
-		gulp.run('js');
-	});
+	//instead of watching files in default
+	gulp.start('css', 'js');
 
-	gulp.watch('./src/game_objects/*.js', function() {
-		gulp.run('js');
-	});
+});
 
+gulp.task('watch', function() {
 
+	gulp.watch('./src/**/*.less', ['css']);
+	gulp.watch('./src/**/*.js' , ['js']);
+
+	livereload.listen();
+	gulp.watch(['sc/**']).on('change', livereload.changed);
 });
