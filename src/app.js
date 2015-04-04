@@ -113,9 +113,17 @@ io.on('connection', function(socket) {
 	});
 
 
-	socket.on('getGameData', function() {
-		console.log(socket.id + ' requested gameData-------'.green);
-		io.to(socket.id).emit('receiveGameData', cg);
+	socket.on('getGameData', function(action) {
+		console.log(socket.id + ' requested gameData action was '.green + action);
+
+		switch (action) {
+			case "play":
+				socket.emit('readyToPlayCards', cg);
+				break;
+			// case "skip";
+			// 	socket.emit('')
+
+		}
 		console.log('sentData'.red);
 	});
 

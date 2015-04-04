@@ -352,8 +352,6 @@ Hand.prototype = {
 	}
 };
 
-
-
 var Game = function(oldGame) {
 
 	//Copy Constructor for Game
@@ -361,20 +359,25 @@ var Game = function(oldGame) {
 	this.deck = oldGame.deck;
 
 	var newPlayerArray = [];
-	console.log('Game constructor.  Looping through players');
+
 	for (var i=0; i<oldGame.players.length; i++) {
 		var newPlayer = new Player(oldGame.players[i]);
+		
+		if (i !== thisPlayerIndex) {
+			newPlayer.cardsLeft = newPlayer.hand.cards.length;
+			newPlayer.hand = undefined;
+		}
 		newPlayerArray.push(newPlayer);
 	}
 	this.players = newPlayerArray;
-	console.log('created all players');
+
 
 	this.currentRule = oldGame.currentRule;
 	this.leader = oldGame.leader;
 	this.currentPlayer = oldGame.currentPlayer;
 
 	this.lastPlayedHand = new Hand(oldGame.lastPlayedHand);
-	console.log('created lastPlayedHand---finished creating Game');
+
 	this.turnData = oldGame.turnData;
 };
 
@@ -459,12 +462,24 @@ Game.prototype = {
 		for (var i=0; i<this.players.length ; i++) {
 
 			var currentPlayer = this.players[i];
-			var currentPlayersHand = currentPlayer.hand;
-			var cardHTML = currentPlayersHand.createHTML();
-
-
 			var selector = "#player" + (i+1) + " div.hand";
-			$(selector).append(cardHTML);
+		
+			var currentPlayersHand = currentPlayer.hand;
+			if (currentPlayersHand) {
+				var cardHTML = currentPlayersHand.createHTML();
+
+
+				$(selector).append(cardHTML);
+			} else {
+				console.log('nohand');
+				var noCardsHTML = "";
+				for (var j=0; j<currentPlayer.cardsLeft; j++) {
+					noCardsHTML += "<div class='card cardBack'></div>";
+				}
+
+				$(selector).append(noCardsHTML);
+			}
+
 		}
 	},
 

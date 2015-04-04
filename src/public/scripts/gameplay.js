@@ -42,12 +42,11 @@ $(document).on('click', '.btn.playCards', function() {
 	if (localGame.currentPlayer !== thisPlayerIndex) { return alert('not your turn'); }
 
 	console.log('playCard');
-	// var selectedPlayer = $(this).closest('.player');
-	// var playerIndex = selectedPlayer.attr('id').getLastChar() - 1;
 
-	console.log('requestingGameData-');
-	//after here receiveGameData is called twice
-	socket.emit('getGameData');
+	//gets latest gameData from server to make sure user didn't change anything.
+	//server emits receiveGameData with gameData, and the player attempts to playCard.
+	var action = "play";
+	socket.emit('getGameData', action);
 
 
 });

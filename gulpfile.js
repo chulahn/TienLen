@@ -53,5 +53,5 @@ gulp.task('watch', function() {
 	gulp.watch('./src/**/*.js' , ['js']);
 
 	livereload.listen();
-	gulp.watch(['sc/**']).on('change', livereload.changed);
+	gulp.watch(['src/**']).on('change', livereload.changed);
 });

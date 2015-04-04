@@ -53,8 +53,8 @@ socket.on('connect' , function() {
 
 	});
 
-	socket.on('receiveGameData', function(data) {
-		console.log(socket.id + '---received gamedata');
+	socket.on('readyToPlayCards', function(data) {
+
 		localGame = new Game(data);
 		thisPlayer = localGame.players[thisPlayerIndex];
 		var cardsToPlay = new Hand(thisPlayer.selectedCards);
@@ -99,11 +99,9 @@ socket.on('connect' , function() {
 			var cardsToRemove = selectedPlayer.find('.selected');
 			cardsToRemove.remove();
 
-			console.log('----------thisPlayer.playCards');
 			//updates localGame and thisPlayer and then pushes changes to server to push to other players
 			thisPlayer.playCards();
 
-			console.log('--------displayingGameData');
 			displayGameData();
 		} else {
 			displayError();
@@ -121,7 +119,7 @@ socket.on('skipTurn', function(d) {
 	localGame.turnData = d.cg.turnData;
 	localGame.currentPlayer = d.cg.currentPlayer;
 	localGame.currentRule = d.cg.currentRule;
-	console.log(socket.id + ' skippedTurn')
+	console.log(socket.id + ' skippedTurn');
 
 	$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum());
 	if (d.newTurn) {
@@ -136,8 +134,8 @@ socket.on('skipTurn', function(d) {
 });
 
 function updateLocal(newData) {
-	localGame = new Game(newData.updatedGame);
 	thisPlayerIndex = newData.playerIndex;
+	localGame = new Game(newData.updatedGame);
 	thisPlayer = localGame.players[newData.playerIndex];
 	lastPlayedHand = new Hand(localGame.lastPlayedHand);
 	currentRule = localGame.currentRule;
