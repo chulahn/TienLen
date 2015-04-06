@@ -54,9 +54,14 @@ Player.prototype.playCards = function() {
 		//set currentPlayer and leader indexes
 		var l = cg.leader = cg.players.indexOf(this);
 		(l !== 3) ? cg.currentPlayer = l + 1 : cg.currentPlayer = 0;
-		cg.turnData = [0,0,0,0];
+		cg.turnData = ['-','-','-','-'];
 		cg.turnData[l] = "L";
 	}
+};
+
+
+Player.prototype.finished = function() {
+	return (this.hand.cards.length === 0);
 };
 
 module.exports = Player;

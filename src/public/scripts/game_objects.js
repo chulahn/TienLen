@@ -485,16 +485,25 @@ Game.prototype = {
 
 	setTurnData: function(action, playerInd) {
 		if (action === "Leader") {
-			this.turnData = [0,0,0,0];
+
+			var curr = playerInd;
+			var next = curr.nextIndex();
+
+			while (next !== curr) {
+				if (isNaN(parseInt(this.turnData[next]))) {
+					this.turnData[next] = "-";
+				}
+				next = next.nextIndex();
+			}
 		}
 		this.turnData[playerInd] = action;
 	},
 
 	checkTurnData: function() {
 		console.log(this.turnData);
-		if (this.turnData.indexOf(0) === -1) {
+		if (this.turnData.indexOf('-') === -1) {
 			var leader = this.turnData.indexOf("Leader");
-			this.turnData = [0,0,0,0];
+			this.turnData = ['-','-','-','-'];
 			this.turnData[leader] = "Start";
 			alert("checkTurn New Turn.  Player " + (leader+1) + " starts");
 			this.currentRule = "None";
@@ -502,5 +511,23 @@ Game.prototype = {
 			$('#currentRule').html("None");
 			$('#lastPlayed').html("");
 		}
+	},
+
+	setNextPlayer: function() {
+
+		var curr = this.currentPlayer;
+		var next = curr.nextIndex();
+
+		//while next value is a number
+		while (this.turnData[next] !== "-") {
+
+			if (next === curr) {
+				this.currentPlayer = curr.nextIndex();
+				return true;
+			}
+			next = next.nextIndex();
+		}
+		this.currentPlayer = next;
+
 	}
 };

@@ -19,7 +19,7 @@ var Game = function(players) {
 
 	this.lastPlayedHand = null;
 	
-	this.turnData = [0,0,0,0];
+	this.turnData = ['-','-','-','-'];
 
 	this.initialize(players);
 };
@@ -138,15 +138,26 @@ Game.prototype = {
 
 	setTurnData: function(action, playerInd) {
 		if (action === "Leader") {
-			this.turnData = [0,0,0,0];
+			this.turnData = ['-','-','-','-'];
 		}
 		this.turnData[playerInd] = action;
 	},
 
 	checkTurnData: function() {
-		if (this.turnData.indexOf(0) === -1) {
+
+		var someoneWon = this.players.some(function (player) {
+			return player.finished();
+		});
+
+		console.log(someoneWon);
+
+		if (someoneWon) {
+			console.log('someoneWon');
+		}
+
+		if (this.turnData.indexOf('-') === -1) {
 			var leader = this.turnData.indexOf("Leader");
-			this.turnData = [0,0,0,0];
+			this.turnData = ['-','-','-','-'];
 			this.turnData[leader] = "Start";
 
 			this.currentRule = "None";

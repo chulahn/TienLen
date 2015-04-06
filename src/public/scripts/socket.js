@@ -28,6 +28,8 @@ socket.on('connect' , function() {
 
 		var i = localGame.findPlayerIndex(d.updatedPlayer);
 		localGame.players[i] = new Player(d.updatedPlayer);
+		localGame.players[i].cardsLeft = localGame.players[i].hand.cards.length;
+		localGame.players[i].hand = undefined;
 
 		console.log('player ' + (i+1) + ' played cards');
 
@@ -40,12 +42,8 @@ socket.on('connect' , function() {
 		localGame.currentRule = d.cg.currentRule;
 
 		var cardsToRemove = localGame.lastPlayedHand.cards.length;
-		console.log ('cards to remove ' + cardsToRemove);
-		console.log( '#player'+(i+1)+'>div.hand>div.card' + ' is selector');
-		console.log(localGame.lastPlayedHand);
 
 		for (var j=0; j<cardsToRemove; j++) {
-			console.log('removing ' + (j+1));
 			$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
 		}
 

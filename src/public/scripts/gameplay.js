@@ -66,8 +66,11 @@ $(document).on('click', '.btn.skipTurn', function() {
 	var thisPlayer = $(this).closest('.player');
 	var playerIndex = thisPlayer.attr('id');
 	playerIndex = playerIndex.slice(playerIndex.length-1) - 1;
-	localGame.currentPlayer = localGame.currentPlayer.nextIndex();
+	//can be replaced with thisPlayerIndex;
+
+
 	localGame.setTurnData("Pass", playerIndex);
+	localGame.setNextPlayer();
 
 	socket.emit('skipTurn', localGame);
 	localGame.checkTurnData();
