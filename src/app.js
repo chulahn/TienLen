@@ -69,8 +69,7 @@ io.on('connection', function(socket) {
 			cg.findStartingPlayer();
 			emitEach('setUpPlayer');
 		}		
-	}
-	else {
+	} else {
 		if (socketIds.length < 4) {
 			socketIds.push(socket.id);
 			var newConnected = missingPlayers.shift();
@@ -83,7 +82,6 @@ io.on('connection', function(socket) {
 				emitEach("reconnectGame");
 			}
 		}
-
 	}
 
 	socket.on('disconnect', function() {
@@ -128,21 +126,15 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('playCards', function(d) {
-		var i = cg.findPlayerIndex(d.updatedPlayer);
-		console.log('----player ' + (i+1) + socket.id + ' played cards----'.green);
 
+		var i = cg.findPlayerIndex(d.updatedPlayer);
 		cg.players[i] = d.updatedPlayer;
 		cg.players[i].__proto__ = Player.prototype;
 
+		updateGame(d.newGame);
 
-		cg.lastPlayedHand = d.oldGame.lastPlayedHand;
-		cg.lastPlayedHand.__proto__ = Hand.prototype;
-
-		cg.leader = d.oldGame.leader;
-		cg.currentPlayer = d.oldGame.currentPlayer;
-		cg.turnData = d.oldGame.turnData;
-		cg.currentRule = d.oldGame.currentRule;
-		console.log('displaying turndata.  Leader is now ', + cg.leader +" Current player:" + cg.currentPlayer);
+		console.log('----player ' + (i+1) + ' played cards----'.green +  socket.id);
+		console.log('Leader is now ', + (cg.leader+1) + " Current player:" + (cg.currentPlayer+1));
 		console.log('-----end played cards.  emitting to other players-----'.red);
 
 		socket.broadcast.emit('playedCards', {cg: cg, updatedPlayer: d.updatedPlayer});
@@ -161,3 +153,15 @@ io.on('connection', function(socket) {
 server.listen(3000, function() {
 	console.log('listening on :3000');
 });
+
+function updateGame(clientGame) {
+
+	cg.lastPlayedHand = clientGame.lastPlayedHand;
+	cg.lastPlayedHand.__proto__ = Hand.prototype;
+
+	cg.leader = clientGame.leader;
+	cg.currentPlayer = clientGame.currentPlayer;
+	cg.turnData = clientGame.turnData;
+	cg.currentRule = clientGame.currentRule;
+
+}

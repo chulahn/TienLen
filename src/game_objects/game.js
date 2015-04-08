@@ -136,7 +136,7 @@ Game.prototype = {
 		}
 	},
 
-	setTurnData: function(action, playerInd) {
+	updateTurnData: function(action, playerInd) {
 		if (action === "Leader") {
 			this.turnData = ['-','-','-','-'];
 		}

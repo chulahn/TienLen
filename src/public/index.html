@@ -6,7 +6,7 @@
 	<script>
 		String.prototype.getLastChar = function() {
 			return this.slice(this.length-1);
-		}
+		};
 
 		Array.prototype.addRemoveCard = function(clickedCard) {
 
@@ -18,7 +18,7 @@
 			}
 
 			var validHandArray = thisArray.every(function(element) {
-				return (typeof element === "object") && element.hasOwnProperty("num") && element.hasOwnProperty("suit") && (thisArray.length > 0)
+				return (typeof element === "object") && element.hasOwnProperty("num") && element.hasOwnProperty("suit") && (thisArray.length > 0);
 			});
 
 			if (validHandArray) {
@@ -39,19 +39,19 @@
 			}
 
 			else {
-				alert("every element in array is not a Card or length=0")
+				alert("every element in array is not a Card or length=0");
 			}
-		}
+		};
 
 		//when changings a players index to div num
 		Number.prototype.toDivNum = function() {
 			return this+1;
-		}
+		};
 
 		//when getting next index in Game.players array
 		Number.prototype.nextIndex = function() {
-			return (this != 3 ? this + 1 : 0)
-		}
+			return (this != 3 ? this + 1 : 0);
+		};
 	</script>
 	
 	<link rel="stylesheet" href="/style/style.css">
@@ -63,7 +63,7 @@
 </head>
 <body>
 	<h1>Tien Len</h1>
-	<h2>You are Player <span id="playerInfo"></span></h2>
+	<h2>You are Player <span id="thisPlayer"></span></h2>
 	<h4 id="turnData">Turn Data</h4>
 	<h3>Current Rule : <span id="currentRule">Start</span></h3>
 	<h3>Last Played : <span id="lastPlayed"></span></h3>

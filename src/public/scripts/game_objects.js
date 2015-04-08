@@ -117,13 +117,11 @@ Player.prototype.playCards = function() {
 
 		//Sets turnData, and indexes for leader and currentPlayer
 		var l = localGame.leader = localGame.findPlayerIndex(this);
-		localGame.currentPlayer = l.nextIndex();
-		// (l !== 3) ? localGame.currentPlayer = l + 1 : localGame.currentPlayer = 0;
-		localGame.setTurnData("Leader", l);
+		localGame.updateTurnData("Leader", l);
 
 		console.log('=====emitting play cards');
 		//Updates server's data 		
-		socket.emit('playCards', {oldGame : localGame, updatedPlayer : this});
+		socket.emit('playCards', {newGame : localGame, updatedPlayer : this});
 
 
 		if (playerHand.cards.length === 0) {
@@ -507,7 +505,7 @@ Game.prototype = {
 		}
 	},
 
-	setTurnData: function(action, playerInd) {
+	updateTurnData: function(action, playerInd) {
 		if (action === "Leader" || action === "Start") {
 
 			var curr = playerInd;
@@ -521,15 +519,15 @@ Game.prototype = {
 			}
 		}
 		this.turnData[playerInd] = action;
+
+		this.setNextPlayer();
 	},
 
 	checkTurnData: function() {
 		console.log(this.turnData);
 		if (this.turnData.indexOf('-') === -1) {
 			var leader = this.turnData.indexOf("Leader");
-			this.setTurnData("Start", leader);
-			// this.turnData = ['-','-','-','-'];
-			// this.turnData[leader] = "Start";
+			this.updateTurnData("Start", leader);
 			alert("checkTurn New Turn.  Player " + (leader+1) + " starts");
 			this.currentRule = "None";
 			this.lastPlayedHand = null;
