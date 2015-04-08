@@ -205,50 +205,71 @@ Hand.prototype = {
 	},
 
 	//Returns type for a Hand, (Single, Double, Straight 3, Straight 4) or nothing if not valid.
-	//Checks length, and then checks if all cards have the same number.
-	//If not all tnumber are the same, check if they increase by one.
 	getType: function() {
 		var sortedCards = this.sortedCards;
+
 		if (sortedCards.length === 1) {
 			return "Single";
-		} else {
-			for (var i=0; i<sortedCards.length; i++) {
-				var currentCard = sortedCards[i];
-				//Get nextCard if not at the end
-				if (i !== sortedCards.length-1) {
-					var nextCard = sortedCards[i+1];
+		} else if (sortedCards.length === 2) {
+			return isDouble();
+		} else if (sortedCards.length > 2) {
+
+			var allCardsMatch = sortedCards.every(function(card) {
+				return (card.num === sortedCards[0].num);
+			});
+
+			if (allCardsMatch) {
+				if (sortedCards.length === 3) {
+					return "Triple";
+				} else if (sortedCards.length === 4) {
+					return "Bomb:4";
 				}
+			} else {
+				return (isBomb() || isStraight());
+			}
+		}
 
-				if (sortedCards.length === 2) {
-					var isDouble = (currentCard.num === nextCard.num) ? "Doubles" : undefined;
-					return isDouble;
-				} else if (sortedCards.length > 2) {
-					var numToMatch = currentCard.num;
-					if (i===0) {
-						//check for triples or 4 of a kind
-						var allCardsMatch = sortedCards.every(function(card) {
-							return (card.num === numToMatch);
-						});
+		function isDouble() {
 
-						if (allCardsMatch) {
-							if (sortedCards.length === 3) {
-								return "Triples";
-							} else if (sortedCards.length === 4) {
-								return "Bomb";
-							}
-						}
-					} else if (i !== sortedCards.length-1) {
-						//return before reaching end if next card wasn't one more than prev
-						numToMatch = currentCard.num+1;
-						if (nextCard.num !== numToMatch) {
-							return;
-						}
-					} else if (i === sortedCards.length-1) {
-						//Finally reached end, is a Straight
-						return "Straight " + sortedCards.length;
+			var currentCard = sortedCards[0];
+			var nextCard = sortedCards[1];	
+
+			var handValue = (currentCard.num === nextCard.num) ? "Doubles" : undefined;
+			return handValue;
+		}
+
+		function isStraight() {
+			
+			var i = 0;
+			while ( i < sortedCards.length-1 ) {
+
+				var prevCard = sortedCards[i];
+				var nextCard = sortedCards[i+1];
+
+				if (nextCard.num === prevCard.num+1) {
+					i++;
+				} else { return; }
+			}
+			return "Straight " + sortedCards.length;
+		}
+
+		function isBomb() {
+			if (sortedCards.length === 6) {
+
+				for (var i=0; i<sortedCards.length; i+=2) {
+					if (sortedCards[i].num !== sortedCards[i+1].num) {
+						return false;
 					}
 				}
+
+				if ( (sortedCards[0].num === (sortedCards[2].num+1)) && ((sortedCards[2].num) === (sortedCards[4].num+1)) ) {	
+					return "Bomb:Straight";
+				} 
+
+				return false;
+
 			}
+			return false; 
 		}
 	},
 
@@ -256,9 +277,10 @@ Hand.prototype = {
 	getValue: function() {
 		var cards = this.sortedCards;
 		var handVal = this.val = {};
+		var valType = this.getType();
 		//if hand is valid then return
-		if (this.getType()) {
-			handVal.type = this.getType();
+		if (valType) {
+			handVal.type = valType;
 			handVal.highest = cards[cards.length-1];
 			return handVal;
 		} else {
@@ -279,7 +301,9 @@ Hand.prototype = {
 				var value = thisCard.compareTo(otherCard);
 				return (value === 1);
 			}
+			return alert('not same type');
 		}
+		return alert('a hand is invalid');
 	},
 
 	//Checks if Hand follows current rule.
@@ -293,7 +317,7 @@ Hand.prototype = {
 			if (cr === "Start") {
 				var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
 				if (!containsThreeOfSpades) {
-					alert("Must have 3 of Spades in Starting Hand");
+					return alert("Must have 3 of Spades in Starting Hand");
 				}
 				return this.isValid() && containsThreeOfSpades;
 			
@@ -484,7 +508,7 @@ Game.prototype = {
 	},
 
 	setTurnData: function(action, playerInd) {
-		if (action === "Leader") {
+		if (action === "Leader" || action === "Start") {
 
 			var curr = playerInd;
 			var next = curr.nextIndex();
@@ -503,8 +527,9 @@ Game.prototype = {
 		console.log(this.turnData);
 		if (this.turnData.indexOf('-') === -1) {
 			var leader = this.turnData.indexOf("Leader");
-			this.turnData = ['-','-','-','-'];
-			this.turnData[leader] = "Start";
+			this.setTurnData("Start", leader);
+			// this.turnData = ['-','-','-','-'];
+			// this.turnData[leader] = "Start";
 			alert("checkTurn New Turn.  Player " + (leader+1) + " starts");
 			this.currentRule = "None";
 			this.lastPlayedHand = null;

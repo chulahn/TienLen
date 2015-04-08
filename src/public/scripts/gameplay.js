@@ -15,19 +15,19 @@ $(document).ready(function() {
 $(document).on('click', '.card', function() {
 	"use strict";
 
-	var clickedCard = $(this);
-	var selectedPlayer = clickedCard.closest('.player');
-	var playerNum = selectedPlayer.attr('id').getLastChar() - 1;
+	var $clickedCard = $(this);
+	var $selectedPlayer = clickedCard.closest('.player');
+	var playerNum = $selectedPlayer.attr('id').getLastChar() - 1;
 
-	if (playerNum !== thisPlayerIndex) { return ;}
+	if (playerNum !== thisPlayerIndex) { return ; }
 	//highlight DOM obj
-	clickedCard.toggleClass('selected');
-	console.log('clicked on card ', clickedCard.attr('alt'));
+	$clickedCard.toggleClass('selected');
+	console.log('clicked on card ', $clickedCard.attr('alt'));
 
 	//create Card object of clickedCard and add/remove from player's selectedCards
 	var selectedCards = thisPlayer.selectedCards;
-	var clickedCardObj = new Card(clickedCard.attr('alt'));
-	selectedCards.addRemoveCard(clickedCardObj);
+	var clickedCard = new Card($clickedCard.attr('alt'));
+	selectedCards.addRemoveCard(clickedCard);
 
 	//get playerNum so server knows which player to update
 	
@@ -55,8 +55,7 @@ $(document).on('click', '.btn.skipTurn', function() {
 	"use strict";
 
 	if (thisPlayerIndex === localGame.currentPlayer && (localGame.currentRule === "None" || localGame.currentRule === "Start")) {
-		alert('must Play a card');
-		return;
+		return alert('must Play a card');
 	}
 
 
@@ -64,8 +63,7 @@ $(document).on('click', '.btn.skipTurn', function() {
 	if (localGame.currentPlayer !== thisPlayerIndex) { return alert('not your turn'); }
 
 	var thisPlayer = $(this).closest('.player');
-	var playerIndex = thisPlayer.attr('id');
-	playerIndex = playerIndex.slice(playerIndex.length-1) - 1;
+	var playerIndex = thisPlayer.attr('id').getLastChar() - 1;
 	//can be replaced with thisPlayerIndex;
 
 
