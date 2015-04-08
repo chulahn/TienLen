@@ -8,6 +8,7 @@ var Player = function(obj) {
 	this.selectedCards = [];
 };
 
+//not used
 //Removes selected cards from Players hand and plays them.
 //sets currentGame.Leader to this Player if true.
 //sets currentGame.lastHand to played hand if true.

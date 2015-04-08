@@ -131,7 +131,13 @@ io.on('connection', function(socket) {
 		cg.players[i] = d.updatedPlayer;
 		cg.players[i].__proto__ = Player.prototype;
 
-		updateGame(d.newGame);
+		updateGame('played', d.newGame);
+
+		console.log(cg.players[i].finished());
+
+		if (cg.players[i].finished()) {
+			cg.addWinner(i);
+		}
 
 		console.log('----player ' + (i+1) + ' played cards----'.green +  socket.id);
 		console.log('Leader is now ', + (cg.leader+1) + " Current player:" + (cg.currentPlayer+1));
@@ -140,28 +146,33 @@ io.on('connection', function(socket) {
 		socket.broadcast.emit('playedCards', {cg: cg, updatedPlayer: d.updatedPlayer});
 	});
 
-	socket.on('skipTurn', function(localGame) {
-		console.log('skipped turn'.yellow + socket.id + ' skipped turn'.yellow);	
-		cg.currentPlayer = localGame.currentPlayer;
-		cg.turnData = localGame.turnData;
+	socket.on('skipTurn', function(clientGame) {
+		console.log('skipped turn'.yellow + socket.id + ' skipped turn'.yellow);
+
+		updateGame('skip', clientGame);	
+
 		var newTurn = cg.checkTurnData();
 		if (newTurn) { console.log('newTurn'.yellow); }
 		socket.broadcast.emit('skipTurn', {cg:cg, newTurn:newTurn});
 	});
 });
 
+
+
 server.listen(3000, function() {
 	console.log('listening on :3000');
 });
 
-function updateGame(clientGame) {
+function updateGame(action, clientGame) {
 
-	cg.lastPlayedHand = clientGame.lastPlayedHand;
-	cg.lastPlayedHand.__proto__ = Hand.prototype;
-
-	cg.leader = clientGame.leader;
 	cg.currentPlayer = clientGame.currentPlayer;
 	cg.turnData = clientGame.turnData;
-	cg.currentRule = clientGame.currentRule;
+	
+	if (action === "played") {
+		cg.lastPlayedHand = clientGame.lastPlayedHand;
+		cg.lastPlayedHand.__proto__ = Hand.prototype;
 
+		cg.leader = clientGame.leader;
+		cg.currentRule = clientGame.currentRule;
+	}
 }

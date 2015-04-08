@@ -7,12 +7,17 @@ var server = require('../app.js');
 var numValues = [3,4,5,6,7,8,9,10,"J","Q","K","A",2];
 var threeOfSpades = new Card(0,0);
 
+Number.prototype.nextIndex = function() {
+	return (this != 3 ? this + 1 : 0);
+};
+
 var Game = function(players) {
 
 	"use strict";
 	this.deck = [];
 	this.players = [];
 	this.currentRule = "Start";
+	this.finishedPlayers = [];
 
 	this.leader = -1;
 	this.currentPlayer = -1;
@@ -135,30 +140,61 @@ Game.prototype = {
 			}
 		}
 	},
-
+	/*
+		updateTurnData: function(action, playerInd) {
+			if (action === "Leader") {
+				this.turnData = ['-','-','-','-'];
+			}
+			this.turnData[playerInd] = action;
+		},
+	*/
 	updateTurnData: function(action, playerInd) {
-		if (action === "Leader") {
-			this.turnData = ['-','-','-','-'];
+		if (action === "Leader" || action === "Start") {
+
+			var curr = playerInd;
+			var next = curr.nextIndex();
+
+			while (next !== curr) {
+				if (isNaN(parseInt(this.turnData[next]))) {
+					this.turnData[next] = "-";
+				}
+				next = next.nextIndex();
+			}
 		}
 		this.turnData[playerInd] = action;
+
 	},
 
+	//only called when skip
 	checkTurnData: function() {
 
 		var someoneWon = this.players.some(function (player) {
 			return player.finished();
 		});
 
-		console.log(someoneWon);
+		console.log('player won ' + someoneWon);
 
 		if (someoneWon) {
 			console.log('someoneWon');
 		}
 
-		if (this.turnData.indexOf('-') === -1) {
+		for (var i=0; i<this.players.length; i++) {
+			currentPlayer = this.players[i];
+
+			if (currentPlayer.finished()) {
+
+			}
+		}
+
+		//player plays and finishes and other players, skip, the player after gets a new rule;;
+
+		//player can play cards and beginning of turn and win game
+		//if player won, updateTurnData should be different. 
+
+		var newTurn = (this.turnData.indexOf('-') === -1); 
+		if (newTurn) {
 			var leader = this.turnData.indexOf("Leader");
-			this.turnData = ['-','-','-','-'];
-			this.turnData[leader] = "Start";
+			this.updateTurnData("Start", leader);
 
 			this.currentRule = "None";
 			this.lastPlayedHand = null;
@@ -168,6 +204,34 @@ Game.prototype = {
 	}
 };
 
+
+//Adds the index of the Player to array of finishedPlayers and updates turnData array w/ place.
+Game.prototype.addWinner = function(i) {
+
+	console.log('adding winner');
+
+	this.finishedPlayers.push(i);
+	console.log(this.finishedPlayers);
+
+	var winnerNum = this.finishedPlayers.length;
+
+	var placeString = "";
+	switch (winnerNum) {
+		case 1:
+			placeString = "1st";
+			break;
+		case 2:
+			placeString = "2nd";
+			break;
+		case 3:
+			placeString = "3rd";
+			break;
+		case 4:
+			placeString = "4th";
+			break;
+	}
+	this.turnData[i] = placeString;
+};
 
 
 module.exports = Game;

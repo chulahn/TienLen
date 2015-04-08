@@ -60,7 +60,7 @@ $(document).on('click', '.btn.skipTurn', function() {
 
 
 	localGame.updateTurnData("Pass", thisPlayerIndex);
-
+	localGame.setNextPlayer();
 	socket.emit('skipTurn', localGame);
 	localGame.checkTurnData();
 
