@@ -118,8 +118,7 @@ Player.prototype.playCards = function() {
 		//Sets turnData, and indexes for leader and currentPlayer
 		var l = localGame.leader = localGame.findPlayerIndex(this);
 		localGame.updateTurnData("Leader", l);
-		localGame.setNextPlayer();
-		// localGame.checkTurnData();
+		localGame.checkTurnData();
 
 
 
@@ -270,7 +269,7 @@ Hand.prototype = {
 					}
 				}
 
-				if ( (sortedCards[0].num === (sortedCards[2].num+1)) && ((sortedCards[2].num) === (sortedCards[4].num+1)) ) {	
+				if ( ((sortedCards[0].num+1) === sortedCards[2].num) && ((sortedCards[2].num+1) === sortedCards[4].num) ) {	
 					return "Bomb:Straight";
 				} 
 
@@ -538,12 +537,24 @@ Game.prototype = {
 
 		var newTurn = (this.turnData.indexOf('-') === -1);
 
+		this.setNextPlayer();
 		if (newTurn) {
-			var leader = this.turnData.indexOf("Leader");
-			this.updateTurnData("Start", leader);
-			this.currentPlayer = leader;
+			var startingPlayer = this.turnData.indexOf("Leader");
 
-			alert("checkTurn New Turn.  Player " + (leader+1) + " starts");
+			if (startingPlayer === -1) { 
+				console.log(this.turnData);
+				var lastFinished = this.getLastFinishedPlace();
+				var lastFinishedIndex = this.turnData.indexOf(lastFinished);
+				startingPlayer = this.getPlayerAfter(lastFinishedIndex);
+			}
+			this.currentPlayer = startingPlayer;
+			
+
+
+			this.updateTurnData("Start", startingPlayer);
+
+
+			alert("checkTurn New Turn.  Player " + (startingPlayer+1) + " starts");
 			
 			this.currentRule = "None";
 			this.lastPlayedHand = null;
@@ -579,6 +590,14 @@ Game.prototype.addWinner = function(i) {
 
 	var winnerNum = this.finishedPlayers.length;
 
+	var placeString = this.getLastFinishedPlace();
+	this.turnData[i] = placeString;
+};
+
+Game.prototype.getLastFinishedPlace = function() {
+
+	var winnerNum = this.finishedPlayers.length;
+
 	var placeString = "";
 	switch (winnerNum) {
 		case 1:
@@ -594,5 +613,39 @@ Game.prototype.addWinner = function(i) {
 			placeString = "4th";
 			break;
 	}
-	this.turnData[i] = placeString;
+
+	return placeString;
+
+};
+
+
+//getPlayerAfter is called with the index of lastFinishedPlace, and all pass's have been set to "-"
+//if turndata looked like [-,-,1,-], Game.getPlayerAfter(2) would return 3
+//[-,-,1,2], Game.getPlayerAfter(3) would return 0
+//[1,-,-,2], Game.getPlayerAfter(3) would return 1
+Game.prototype.getPlayerAfter = function(i) {
+
+	var valid = (this.turnData.indexOf("-") !== -1);
+
+	if (!valid) {
+		console.log('getPlayerAfter called on invalid turnData'.red);
+		console.log(this.turnData);
+
+		for (var j=0; j<this.turnData.length; j++) {
+			var turn = this.turnData[j];
+			console.log(turn);
+			if (turn === "Pass") { this.turnData[j] = "-"; }
+		}
+		console.log(this.turnData);
+	}
+
+	var start = i;
+	var next = start.nextIndex();
+
+	while(this.turnData[next] !== "-") {
+		next = next.nextIndex();
+	}
+
+	return next;
+
 };

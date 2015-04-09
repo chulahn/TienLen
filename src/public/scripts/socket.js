@@ -41,6 +41,8 @@ socket.on('playedCards', function(d) {
 	localGame.currentPlayer = d.cg.currentPlayer;
 	localGame.turnData = d.cg.turnData;
 	localGame.currentRule = d.cg.currentRule;
+	localGame.finishedPlayers = d.cg.finishedPlayers;
+
 
 	var cardsToRemove = localGame.lastPlayedHand.cards.length;
 
@@ -113,6 +115,7 @@ socket.on('skipTurn', function(d) {
 	localGame.turnData = d.cg.turnData;
 	localGame.currentPlayer = d.cg.currentPlayer;
 	localGame.currentRule = d.cg.currentRule;
+	localGame.finishedPlayers = d.cg.finishedPlayers;
 	console.log(socket.id + ' skippedTurn');
 
 	$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum());

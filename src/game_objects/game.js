@@ -149,17 +149,21 @@ Game.prototype = {
 		},
 	*/
 	updateTurnData: function(action, playerInd) {
+		console.log('update turndata');
 		if (action === "Leader" || action === "Start") {
 
 			var curr = playerInd;
 			var next = curr.nextIndex();
 
+			console.log(this.turnData);
+			console.log('curr ' + curr + ' next ' + next);
 			while (next !== curr) {
 				if (isNaN(parseInt(this.turnData[next]))) {
 					this.turnData[next] = "-";
 				}
 				next = next.nextIndex();
 			}
+			console.log(this.turnData);
 		}
 		this.turnData[playerInd] = action;
 
@@ -178,40 +182,72 @@ Game.prototype = {
 			console.log('someoneWon');
 		}
 
-		for (var i=0; i<this.players.length; i++) {
-			currentPlayer = this.players[i];
-
-			if (currentPlayer.finished()) {
-
-			}
-		}
-
 		//player plays and finishes and other players, skip, the player after gets a new rule;;
 
 		//player can play cards and beginning of turn and win game
 		//if player won, updateTurnData should be different. 
+		console.log(this.turnData);
+		console.log(this.currentPlayer);
+		this.setNextPlayer();
 
 		var newTurn = (this.turnData.indexOf('-') === -1); 
 		if (newTurn) {
-			var leader = this.turnData.indexOf("Leader");
-			this.updateTurnData("Start", leader);
+			console.log('new turn');
+			var startingPlayer = this.turnData.indexOf("Leader");
+
+			if (startingPlayer === -1) {
+				console.log('no leader') ;
+				var lastFinished = this.getLastFinishedPlace();
+				var lastFinishedIndex = this.turnData.indexOf(lastFinished);
+				startingPlayer = this.getPlayerAfter(lastFinishedIndex);
+			}
+
+			this.currentPlayer = startingPlayer;
+			this.updateTurnData("Start", startingPlayer);
 
 			this.currentRule = "None";
 			this.lastPlayedHand = null;
 			return true;
 		}
+
 		return false;
+	},
+
+	setNextPlayer: function() {
+
+		var curr = this.currentPlayer;
+		var next = curr.nextIndex();
+
+		//while next value is a number
+		//skip, leader, 1 , or 2
+		while (this.turnData[next] !== "-") {
+
+			if (next === curr) { //reached the end
+				this.currentPlayer = curr.nextIndex();
+				return true;
+			}
+			next = next.nextIndex();
+		}
+		this.currentPlayer = next;
+
 	}
 };
 
 
 //Adds the index of the Player to array of finishedPlayers and updates turnData array w/ place.
 Game.prototype.addWinner = function(i) {
-
 	console.log('adding winner');
-
 	this.finishedPlayers.push(i);
+
 	console.log(this.finishedPlayers);
+	var winnerNum = this.finishedPlayers.length;
+
+	var placeString = this.getLastFinishedPlace();
+	console.log(placeString);
+	this.turnData[i] = placeString;
+};
+
+Game.prototype.getLastFinishedPlace = function() {
 
 	var winnerNum = this.finishedPlayers.length;
 
@@ -230,8 +266,40 @@ Game.prototype.addWinner = function(i) {
 			placeString = "4th";
 			break;
 	}
-	this.turnData[i] = placeString;
+
+	return placeString;
+
 };
 
+//getPlayerAfter is called with the index of lastFinishedPlace, and all pass's have been set to "-"
+//if turndata looked like [-,-,1,-], Game.getPlayerAfter(2) would return 3
+//[-,-,1,2], Game.getPlayerAfter(3) would return 0
+//[1,-,-,2], Game.getPlayerAfter(3) would return 1
+Game.prototype.getPlayerAfter = function(i) {
+
+	var valid = (this.turnData.indexOf("-") !== -1);
+
+	if (!valid) {
+		console.log('getPlayerAfter called on invalid turnData'.red);
+		console.log(this.turnData);
+
+		for (var j=0; j<this.turnData.length; j++) {
+			var turn = this.turnData[j];
+			console.log(turn);
+			if (turn === "Pass") { this.turnData[j] = "-"; }
+		}
+		console.log(this.turnData);
+	}
+
+	var start = i;
+	var next = start.nextIndex();
+
+	while(this.turnData[next] !== "-") {
+		next = next.nextIndex();
+	}
+
+	return next;
+
+};
 
 module.exports = Game;
