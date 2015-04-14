@@ -140,23 +140,17 @@ Game.prototype = {
 			}
 		}
 	},
-	/*
-		updateTurnData: function(action, playerInd) {
-			if (action === "Leader") {
-				this.turnData = ['-','-','-','-'];
-			}
-			this.turnData[playerInd] = action;
-		},
-	*/
+
 	updateTurnData: function(action, playerInd) {
 		console.log('update turndata');
+		console.log(this.turnData);
 		if (action === "Leader" || action === "Start") {
 
 			var curr = playerInd;
 			var next = curr.nextIndex();
+			console.log('curr ' + curr + ' is: ' + this.turnData[curr]);
 
-			console.log(this.turnData);
-			console.log('curr ' + curr + ' next ' + next);
+			//sets all unfinished players to "-"
 			while (next !== curr) {
 				if (isNaN(parseInt(this.turnData[next]))) {
 					this.turnData[next] = "-";
@@ -166,35 +160,22 @@ Game.prototype = {
 			console.log(this.turnData);
 		}
 		this.turnData[playerInd] = action;
-
 	},
 
-	//only called when skip
+	//Called when a player skips.  Checks to see if all players have skipped(newTurn)
+	//If newTurn, reset currentRule and lastPlayedHand, set currentPlayer and update turnData
+	//if not, set currentPlayer with setNextPlayer();
 	checkTurnData: function() {
-
-		var someoneWon = this.players.some(function (player) {
-			return player.finished();
-		});
-
-		console.log('player won ' + someoneWon);
-
-		if (someoneWon) {
-			console.log('someoneWon');
-		}
-
-		//player plays and finishes and other players, skip, the player after gets a new rule;;
 
 		//player can play cards and beginning of turn and win game
 		//if player won, updateTurnData should be different. 
 		console.log(this.turnData);
-		console.log(this.currentPlayer);
-		this.setNextPlayer();
 
 		var newTurn = (this.turnData.indexOf('-') === -1); 
 		if (newTurn) {
 			console.log('new turn');
+			
 			var startingPlayer = this.turnData.indexOf("Leader");
-
 			if (startingPlayer === -1) {
 				console.log('no leader') ;
 				var lastFinished = this.getLastFinishedPlace();
@@ -204,22 +185,21 @@ Game.prototype = {
 
 			this.currentPlayer = startingPlayer;
 			this.updateTurnData("Start", startingPlayer);
-
 			this.currentRule = "None";
 			this.lastPlayedHand = null;
 			return true;
 		}
 
+		this.setNextPlayer();
 		return false;
 	},
 
+	//sets the new currentPlayer, if not a newTurn, by looking for the next "-" in turnData
 	setNextPlayer: function() {
 
 		var curr = this.currentPlayer;
 		var next = curr.nextIndex();
 
-		//while next value is a number
-		//skip, leader, 1 , or 2
 		while (this.turnData[next] !== "-") {
 
 			if (next === curr) { //reached the end
@@ -229,22 +209,29 @@ Game.prototype = {
 			next = next.nextIndex();
 		}
 		this.currentPlayer = next;
-
 	}
 };
 
 
 //Adds the index of the Player to array of finishedPlayers and updates turnData array w/ place.
 Game.prototype.addWinner = function(i) {
-	console.log('adding winner');
+
 	this.finishedPlayers.push(i);
-
-	console.log(this.finishedPlayers);
 	var winnerNum = this.finishedPlayers.length;
-
 	var placeString = this.getLastFinishedPlace();
-	console.log(placeString);
 	this.turnData[i] = placeString;
+	
+	
+	console.log('adding winner ' + i + ' ' + placeString);
+	console.log(this.finishedPlayers);
+	console.log(this.turnData);
+
+	//automatically assign 4th to last player
+	if (placeString === "3rd") {
+		var lastPlace = this.turnData.indexOf("-");
+		this.turnData[lastPlace] = "4th";
+		//call game end function
+	}
 };
 
 Game.prototype.getLastFinishedPlace = function() {
@@ -268,24 +255,21 @@ Game.prototype.getLastFinishedPlace = function() {
 	}
 
 	return placeString;
-
 };
 
-//getPlayerAfter is called with the index of lastFinishedPlace, and all pass's have been set to "-"
+//getPlayerAfter is called with the index of lastFinishedPlace
 //if turndata looked like [-,-,1,-], Game.getPlayerAfter(2) would return 3
 //[-,-,1,2], Game.getPlayerAfter(3) would return 0
 //[1,-,-,2], Game.getPlayerAfter(3) would return 1
 Game.prototype.getPlayerAfter = function(i) {
 
 	var valid = (this.turnData.indexOf("-") !== -1);
-
 	if (!valid) {
 		console.log('getPlayerAfter called on invalid turnData'.red);
 		console.log(this.turnData);
 
 		for (var j=0; j<this.turnData.length; j++) {
 			var turn = this.turnData[j];
-			console.log(turn);
 			if (turn === "Pass") { this.turnData[j] = "-"; }
 		}
 		console.log(this.turnData);
@@ -297,9 +281,7 @@ Game.prototype.getPlayerAfter = function(i) {
 	while(this.turnData[next] !== "-") {
 		next = next.nextIndex();
 	}
-
 	return next;
-
 };
 
 module.exports = Game;

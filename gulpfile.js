@@ -11,6 +11,7 @@ gulp.task('css', function() {
 	return gulp.src('./src/public/style/css/style.less')
 		.pipe(less())
 		.pipe(gulp.dest('./build/public/style/css/'))
+		.pipe(gulp.dest('./src/public/style/css/'))
 		.pipe(rename({suffix: '.min'}))
 		.pipe(minifyCss())
 		.pipe(gulp.dest('./build/public/style/css/'));

@@ -3,6 +3,10 @@
   src: url('../font/Campanile.ttf');
 }
 
+*,*:before, *:after {
+  box-sizing: border-box;
+}
+
 .card {
   display: inline-block;
   width: 80px;
@@ -48,8 +52,24 @@
   background-image: url(../images/goyard.jpg);
 }
 
+.player { 
+  display: table;
+}
+
 .activePlayer {
   border: 2px red solid;
+}
+
+#turnData { 
+  text-align: center;
+
+  > * {
+    vertical-align: bottom;
+  }
+}
+
+#lastPlayed > * {
+  vertical-align: bottom;
 }
 
 #turnTable {
@@ -67,6 +87,9 @@
     border: 2px solid black;
     width: 100px;
     text-align: center;
+    font-size: 24px;
+    padding-left: 5px;
+    padding-right: 5px;
 
     &.you {
       border: 2px solid red;
@@ -78,7 +101,6 @@
     &.index {
       background-color: blue;
       color: white;
-      width: inherit;
     }
   }
 }

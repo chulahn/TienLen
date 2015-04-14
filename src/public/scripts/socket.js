@@ -16,7 +16,8 @@ socket.on('setUpPlayer', function(data) {
 
 socket.on('reconnectGame', function(data) {
 	setupLocalGame(data);
-	$('#thisPlayer').html(thisPlayerIndex.toDivNum());
+
+	
 	$('.btn').show();
 	$('.card').remove();
 	localGame.displayCards();
@@ -124,7 +125,7 @@ socket.on('skipTurn', function(d) {
 		var leader = localGame.turnData.indexOf("Start");
 		alert("onEmit skip New Turn.  Player " + (leader+1) + " starts.  This is Player " + thisPlayerIndex);
 		$('#currentRule').html("None");
-		$('#lastPlayed').html("");
+		$('#lastPlayed>.hand').html("");
 	}
 	displayGameData();
 

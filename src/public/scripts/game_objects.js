@@ -387,7 +387,7 @@ var Game = function(updatedGame) {
 	for (var i=0; i<updatedGame.players.length; i++) {
 		var newPlayer = new Player(updatedGame.players[i]);
 		
-		if (i !== thisPlayerIndex) {
+		if (i !== thisPlayerIndex && thisPlayerIndex < 4) {
 			newPlayer.cardsLeft = newPlayer.hand.cards.length;
 			newPlayer.hand = undefined;
 		}
@@ -552,7 +552,7 @@ Game.prototype = {
 			this.currentRule = "None";
 			this.lastPlayedHand = null;
 			$('#currentRule').html("None");
-			$('#lastPlayed').html("");
+			$('#lastPlayed>.hand').html("");
 			return;
 		}
 		this.setNextPlayer();

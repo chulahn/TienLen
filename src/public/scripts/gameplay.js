@@ -77,7 +77,18 @@ function isPlayersButton($clickedButton) {
 
 function displayGameData() {
 
-	$('#thisPlayer').html(thisPlayerIndex.toDivNum());
+	var connectedPerson = "";
+
+	if (thisPlayerIndex <= 3) {
+		connectedPerson = "Player " + thisPlayerIndex.toDivNum();
+	} else {
+		console.log('spect');
+		connectedPerson = "Spectator " + (thisPlayerIndex - 3);
+	}
+
+	$('#thisPlayer').html(connectedPerson);
+
+
 	$("#currentRule").html(localGame.currentRule);
 
 	displayTurnData();
@@ -87,9 +98,9 @@ function displayGameData() {
 	function displayTurnData() {
 		//Turn Information in table format
 		var turn = localGame.turnData;
-		var dispHTML = "<div id='turnTable'>";
-		var player = "<ul><li class='index'>Player";
-		var status = "<ul><li class='index'>Status";
+		var tableHTML = "";
+		var playerRow = "<ul><li class='index'>Player";
+		var statusRow = "<ul><li class='index'>Status";
 
 		for (var i=0; i<turn.length; i++) {
 			var li = "<li class=' ";
@@ -101,15 +112,15 @@ function displayGameData() {
 			}
 			li += "'>";
 
-			player += li + (i+1);
-			status += li + turn[i];
+			playerRow += li + (i+1);
+			statusRow += li + turn[i];
 		}
 
-		player += "</ul>";
-		status += "</ul>";
+		playerRow += "</ul>";
+		statusRow += "</ul>";
 
-		dispHTML += player + status + "</div>";
-		$('#turnData').html(dispHTML);
+		tableHTML += playerRow + statusRow;
+		$('#turnTable').html(tableHTML);
 
 		//Current Player's Turn in text
 		var cpDiv = localGame.currentPlayer.toDivNum(); 
@@ -120,10 +131,10 @@ function displayGameData() {
 	function displayLastPlayedHand() {
 		if (localGame.lastPlayedHand && localGame.lastPlayedHand.cards) {
 			var leaderDiv = localGame.leader.toDivNum();
-			$('#lastPlayed').html(localGame.lastPlayedHand.createHTML());
-			$('#lastPlayed').append("by Player " + leaderDiv);
+			$('#lastPlayed>.hand').html(localGame.lastPlayedHand.createHTML());
+			$('#lastPlayed>.hand').append("by Player " + leaderDiv);
 		} else {
-			$('#lastPlayed').html("");
+			$('#lastPlayed>.hand').html("");
 		}
 	}
 
