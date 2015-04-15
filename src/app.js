@@ -28,7 +28,7 @@ var gameStarted = false;
 
 function emitEach(eventName, data) {
 	for (var j=0; j<4; j++) {
-		var currentSocket = io.sockets.sockets[j];
+		var currentSocket = players[j];
 
 		switch(eventName) {
 			case 'setUpPlayer':
@@ -70,7 +70,7 @@ io.on('connection', function(socket) {
 		}		
 	} else {
 
-		//Game already started, but players disconnected.
+		//Game already started, but some player(s) disconnected.
 		if (players.length < 4) {
 
 			socketIds.push(socket.id);
@@ -79,10 +79,11 @@ io.on('connection', function(socket) {
 			var newConnected = missingPlayers.shift();
 			newConnected.id = socket.id;
 			players.push(newConnected); //push object containing id and num
-			
+			console.log(players);
+
 			//Update Server's Game object with new Player id
 			cg.players[newConnected.num].id = newConnected.id; 
-			
+
 			//4 Players are connected, Update everyones game
 			if (players.length === 4) {
 				console.log('reconnectingGame');
@@ -93,26 +94,40 @@ io.on('connection', function(socket) {
 			console.log("Spectactor joined");
 			socketIds.push(socket.id);
 
-			io.to(socket.id).emit("reconnectGame", {playerIndex: socketIds.length-1 , updatedGame: cg})
+			io.to(socket.id).emit("reconnectGame", {playerIndex: socketIds.length-1 , updatedGame: cg});
 		}
 	}
 
 	socket.on('disconnect', function() {
 		
 		//Remove disconnected Player's socket
-		var discPlayer = socketIds.indexOf(socket.id);
-		socketIds.splice(discPlayer,1);
-		console.log(socketIds.length + ' players left. ' +  
-			" Player" + (discPlayer+1) + ':' + socket.id + ' has disconnected');
+		var discPerson = socketIds.indexOf(socket.id);
+		socketIds.splice(discPerson,1);
+		console.log(socketIds.length + ' sockets left.');
 
-		//Remove Object contained id, and num from players, and add to missingPlayers
-		missingPlayers.push(players.splice(discPlayer,1)[0]);
+
+
+		
+		//Find the Object which has the same id
+		//Remove from players and push to missingPlayers
+
+		for (var i=0; i<players.length; i++) {
+
+			if (players[i].id === socket.id) {
+				missingPlayers.push(players.splice(i,1)[0]);
+				console.log(players.length + ' players left. ' +  
+					" Player" + (discPerson+1) + ':' + socket.id + ' has disconnected');
+			}
+
+		}
+
 		console.log(missingPlayers);
 		console.log('--------');
 
-		//Reset Game if no socket connections;
-		if (socketIds.length === 0) {
-			console.log('no connections, deleting game');
+
+		//Reset Game if no players;
+		if (players.length === 0) {
+			console.log('no players, deleting game');
 			missingPlayers = [];
 			gameStarted = false;
 		}
