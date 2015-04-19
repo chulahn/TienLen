@@ -1,3 +1,8 @@
+if (typeof socket === "undefined") {
+	socket = io.connect('http://localhost:3000');
+}
+
+
 socket.on('connect' , function() {
 	console.log("Your socket.id is " + socket.id);
 });
@@ -130,6 +135,23 @@ socket.on('skipTurn', function(d) {
 	displayGameData();
 
 });
+
+socket.on('createdRoom', function(roomNum){
+	console.log('createdRoom');
+
+	$('body').load('/room');
+
+});
+
+socket.on('leftRoom', function(roomNum){
+	console.log('leftRoom');
+
+	$('body').load('/', function() {
+		$('title').html('Home');
+		
+	});
+});
+
 
 function setupLocalGame(newData) {
 	thisPlayerIndex = newData.playerIndex;

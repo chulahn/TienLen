@@ -1,4 +1,4 @@
-var socket = io.connect('http://localhost:3000');
+// var socket = io.connect('http://localhost:3000');
 var thisPlayerIndex;
 var thisPlayer;
 var localGame;
@@ -6,7 +6,7 @@ var localGame;
 $(document).ready(function() {
 	"use strict";
 });
-
+	
 //update player's selected hand
 $(document).on('click', '.card', function() {
 	"use strict";
@@ -29,12 +29,6 @@ $(document).on('click', '.card', function() {
 	
 
 	socket.emit('clickedCard', {selectedCards: selectedCards , playerNum : playerNum});
-});
-
-$(document).on('click', '.btn', function() {
-
-
-
 });
 
 $(document).on('click', '.btn.playCards', function() {
@@ -65,6 +59,12 @@ $(document).on('click', '.btn.skipTurn', function() {
 
 
 	displayGameData();
+});
+
+$(document).on('click', '#leaveRoom', function() {
+	"use strict";
+	console.log('leave room');
+	socket.emit('leaveRoom', $('#roomNum').html());
 });
 
 function isPlayersButton($clickedButton) {
