@@ -12,51 +12,38 @@ socket.on('setUpPlayer', function(data) {
 	
 	setupLocalGame(data);
 
-	$('.card').remove();
+	cleanPage();
 	localGame.displayCards();
 
-	hideOtherPlayer();
 	displayGameData();
 });
 
 socket.on('reconnectGame', function(data) {
+	console.log('reconnecting');
+
 	setupLocalGame(data);
 
-	
-	$('.btn').show();
-	$('.card').remove();
+	cleanPage();
 	localGame.displayCards();
+	highlightSelected();
 
-	hideOtherPlayer();
 	displayGameData();
 });
 
 socket.on('playedCards', function(d) {
 
+	localGame = new Game(d.cg);
+	thisPlayer = localGame.players[thisPlayerIndex];
+
 	var i = localGame.findPlayerIndex(d.updatedPlayer);
-	localGame.players[i] = new Player(d.updatedPlayer);
-	localGame.players[i].cardsLeft = localGame.players[i].hand.cards.length;
-	localGame.players[i].hand = undefined;
-
-	console.log('player ' + (i+1) + ' played cards');
-
-
-	//NEED TO update players
-	localGame.lastPlayedHand = new Hand(d.cg.lastPlayedHand);
-	localGame.leader = d.cg.leader;
-	localGame.currentPlayer = d.cg.currentPlayer;
-	localGame.turnData = d.cg.turnData;
-	localGame.currentRule = d.cg.currentRule;
-	localGame.finishedPlayers = d.cg.finishedPlayers;
-
 
 	var cardsToRemove = localGame.lastPlayedHand.cards.length;
-
 	for (var j=0; j<cardsToRemove; j++) {
 		$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
 	}
 
 	displayGameData();
+	console.log('player ' + (i+1) + ' played cards');
 
 });
 
@@ -106,11 +93,16 @@ socket.on('readyToPlayCards', function(data) {
 
 		if ( !cardsToPlay.followsRule() ) {
 			errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
+
+			var containsThreeOfSpades = (cardsToPlay.findCard(threeOfSpades) !== -1);
+			if (!containsThreeOfSpades) {
+				errorMessage += "Must have 3 of Spades";
+			}
 		}
 
 		if ( !cardsToPlay.beats(localGame.lastPlayedHand) ) {
 			errorMessage += "Hand does not beat last played Hand\n";
-			}
+		}
 		alert(errorMessage);
 	}
 
@@ -118,13 +110,11 @@ socket.on('readyToPlayCards', function(data) {
 
 
 socket.on('skipTurn', function(d) {
-	localGame.turnData = d.cg.turnData;
-	localGame.currentPlayer = d.cg.currentPlayer;
-	localGame.currentRule = d.cg.currentRule;
-	localGame.finishedPlayers = d.cg.finishedPlayers;
+
+	localGame = new Game(d.cg);
+
 	console.log(socket.id + ' skippedTurn');
 
-	$('#currentPlayersTurn').html(localGame.currentPlayer.toDivNum());
 	if (d.newTurn) {
 		localGame.lastPlayedHand = lastPlayedHand = null;
 		var leader = localGame.turnData.indexOf("Start");
@@ -157,4 +147,24 @@ function setupLocalGame(newData) {
 	thisPlayerIndex = newData.playerIndex;
 	localGame = new Game(newData.updatedGame);
 	thisPlayer = localGame.players[newData.playerIndex];
+}
+
+
+//Clears any previously added Cards, and shows only the user's buttons
+function cleanPage() {
+
+	//clear cards so that new cards can be added
+	$('.card').remove();
+
+	//hide other player's buttons
+	var a = thisPlayerIndex.toDivNum();
+	$('.btn').show();
+	$('.player').each(function() {
+		var $curr = $(this);
+		var playerNum = $curr.attr('id').getLastChar();
+		if (a != playerNum) {
+			$curr.find('.btn').hide();
+		}
+	});
+
 }

@@ -309,6 +309,7 @@ Hand.prototype = {
 	//Checks if Hand follows current rule.
 	followsRule: function() {
 		var cr = localGame.currentRule;
+
 		console.log('Hand.followsRule ' + cr);
 
 		if (cr !== "Start" && cr !== "None") {
@@ -317,7 +318,7 @@ Hand.prototype = {
 			if (cr === "Start") {
 				var containsThreeOfSpades = (this.findCard(threeOfSpades) !== -1);
 				if (!containsThreeOfSpades) {
-					return alert("Must have 3 of Spades in Starting Hand");
+					// return alert("Must have 3 of Spades in Starting Hand");
 				}
 				return this.isValid() && containsThreeOfSpades;
 			
@@ -404,6 +405,8 @@ var Game = function(updatedGame) {
 
 	this.turnData = updatedGame.turnData;
 	this.finishedPlayers = updatedGame.finishedPlayers;
+
+
 };
 
 Game.prototype = {
@@ -488,22 +491,19 @@ Game.prototype = {
 
 			var currentPlayer = this.players[i];
 			var selector = "#player" + (i+1) + " div.hand";
+			var cardHTML = "";
 		
 			var currentPlayersHand = currentPlayer.hand;
+
 			if (currentPlayersHand) {
-				var cardHTML = currentPlayersHand.createHTML();
-
-
-				$(selector).append(cardHTML);
+				cardHTML = currentPlayersHand.createHTML();
 			} else {
-				console.log('nohand');
-				var noCardsHTML = "";
+				console.log('Other Player\'s Hand');
 				for (var j=0; j<currentPlayer.cardsLeft; j++) {
-					noCardsHTML += "<div class='card cardBack'></div>";
+					cardHTML += "<div class='card cardBack'></div>";
 				}
-
-				$(selector).append(noCardsHTML);
 			}
+			$(selector).append(cardHTML);
 
 		}
 	},

@@ -75,6 +75,8 @@ function isPlayersButton($clickedButton) {
 
 }
 
+
+//Displays status of Person (Spectator or Player), turnData, lastPlayedHand
 function displayGameData() {
 
 	var connectedPerson = "";
@@ -145,17 +147,17 @@ function displayGameData() {
 
 }
 
-//hides other players buttons
-function hideOtherPlayer() {
-	var a = thisPlayerIndex.toDivNum();
-	$('.btn').show();
 
-	$('.player').each(function() {
-		var curr = $(this);
-		var playerNum = curr.attr('id').getLastChar();
-		if (a != playerNum) {
-			curr.find('.btn').hide();
-		}
+
+function highlightSelected() {
+
+
+	var selectedCards = thisPlayer.selectedCards;
+
+	selectedCards.forEach(function (card) {
+
+		$('.card[alt="' + card.val + '"]').addClass('selected');
+
 	});
 
 }
