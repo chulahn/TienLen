@@ -39,7 +39,7 @@ var Card = function (a, b) {
 			this.val = a;
 		}
 	} else {
-		//Pass in Two Ints.(0-12, 0-3)
+		//Pass in Two Ints.(0-12, 0-3) (Number, Suit)
 		this.num = a;
 		this.suit = b;
 		if ((a || b) !== -1) {
@@ -225,7 +225,7 @@ Hand.prototype = {
 					return "Bomb:4";
 				}
 			} else {
-				return (isBomb() || isStraight());
+				return (isBombStraight() || isStraight());
 			}
 		}
 
@@ -253,7 +253,7 @@ Hand.prototype = {
 			return "Straight " + sortedCards.length;
 		}
 
-		function isBomb() {
+		function isBombStraight() {
 			if (sortedCards.length === 6) {
 
 				for (var i=0; i<sortedCards.length; i+=2) {
@@ -290,18 +290,35 @@ Hand.prototype = {
 
 	//If a Hand beats another Hand, returns true.
 	//Checks if both Hands are valid and same Type.
-	//then compares values of both cards.
+		//compares values of both cards.
+	//if types are different,
+		//other hand is a bomb, return false
+		//else if this hand is bomb, return true
 	beats: function(b) {
 		if (this.isValid() && b.isValid()) {
 
 			if (this.val.type === b.val.type) {
-				var thisCard = this.val.highest;
-				var otherCard = b.val.highest;
 
-				var value = thisCard.compareTo(otherCard);
-				return (value === 1);
+				var thisHighest = this.val.highest;
+				var otherHighest = b.val.highest;
+
+				var isGreater = (thisHighest.compareTo(otherHighest) === 1);
+				return isGreater;
+
+			} else {
+
+				//other hand is a bomb, cannot beat
+				if (b.isBomb()) {
+					return false;
+				} else {
+
+					if (this.isBomb()) {
+						return true;
+					} else {
+						return alert('not same type');
+					}
+				}
 			}
-			return alert('not same type');
 		}
 		return alert('a hand is invalid');
 	},
@@ -326,6 +343,10 @@ Hand.prototype = {
 				return this.isValid();
 			}
 		}
+	},
+
+	isBomb: function() {
+		return (this.val.type.indexOf("Bomb") !== -1);
 	},
 
 	createHTML: function() {
