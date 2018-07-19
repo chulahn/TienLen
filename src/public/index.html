@@ -1,107 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<title>13 Card Game</title>
-		<link rel="stylesheet" href="/style/style.css">
 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+<head>
+	<meta charset="UTF-8">
+	<title>13 Card Game</title>
+	<link rel="stylesheet" href="/style/style.css">
 
-		<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
-		<script src="/socket.io/socket.io.js"></script>
-		<script>
-			var socket;
-			if (typeof socket === "undefined") {
-				socket = io.connect('http://localhost:3000');
-			}
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
 
-			$(document).ready(function() {
+	<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		var socket;
+		if (typeof socket === "undefined") {
+			socket = io.connect('http://localhost:3000');
+		}
 
-				$('#createRoom').on('click', function(){
-					var roomNum = Math.floor(Math.random()*10000);
-					console.log('creating room');
-					socket.emit('createRoom');
-				});
+		$(document).ready(function () {
 
-
-				$('#getRooms').on('click', function(){
-					console.log('getting rooms');
-					socket.emit('getRooms');
-				});
-
-				$('#available').on('click', '.joinRoom', function() {
-					console.log('joining room');
-					var $this = $(this);
-					console.log($this)
-					var roomNum = $this.attr('alt');
-					socket.emit('joinRoom', roomNum);
-				});
-
+			$('#createRoom').on('click', function () {
+				var roomNum = Math.floor(Math.random() * 10000);
+				console.log('creating room');
+				socket.emit('createRoom');
 			});
 
-			socket.on('createdRoom', function(roomNum) {
-				console.log('createdRoom');
 
-				$('body').load('/room', function() {
-					$('title').html('Room ' + roomNum);
-					$('#roomNum').html(roomNum);					
-				});
-
+			$('#getRooms').on('click', function () {
+				console.log('getting rooms');
+				socket.emit('getRooms');
 			});
 
-			socket.on('gotRooms', function(rooms) {
-				console.log('gotRooms');
+			$('#available').on('click', '.joinRoom', function () {
+				console.log('joining room');
+				var $this = $(this);
+				console.log($this)
+				var roomNum = $this.attr('alt');
+				socket.emit('joinRoom', roomNum);
+			});
 
-				if (rooms.length === 0) { $('#available').html('None'); }
-				else {
-					var availableRoomsHTML = "";
+		});
 
-					for (var i=0; i<rooms.length; i++) {
+		socket.on('createdRoom', function (roomNum) {
+			console.log('createdRoom');
 
-						availableRoomsHTML += '<span class="btn btn-success joinRoom" ';
-						availableRoomsHTML += 'alt="' + rooms[i] + '">';
-						availableRoomsHTML += rooms[i] + '</span>';
+			$('body').load('/room', function () {
+				$('title').html('Room ' + roomNum);
+				$('#roomNum').html(roomNum);
+			});
 
-						
-						console.log(rooms[i]);
+		});
 
-					}
+		socket.on('gotRooms', function (rooms) {
+			console.log('gotRooms');
 
-					$('#available').html(availableRoomsHTML);
+			if (rooms.length === 0) { $('#available').html('None'); }
+			else {
+				var availableRoomsHTML = "";
+
+				for (var i = 0; i < rooms.length; i++) {
+
+					availableRoomsHTML += '<span class="btn btn-success joinRoom" ';
+					availableRoomsHTML += 'alt="' + rooms[i] + '">';
+					availableRoomsHTML += rooms[i] + '</span>';
+
+
+					console.log(rooms[i]);
 
 				}
 
+				$('#available').html(availableRoomsHTML);
+
+			}
+
+		});
+
+		socket.on('joinedRoom', function (roomNum) {
+			console.log('joined room');
+
+			$('body').load('/room', function () {
+				$('title').html('Room ' + roomNum);
+				$('#roomNum').html(roomNum);
 			});
 
-			socket.on('joinedRoom', function(roomNum) {
-				console.log('joined room');
-
-				$('body').load('/room', function() {
-					$('title').html('Room ' + roomNum);
-					$('#roomNum').html(roomNum);					
-				});
-
-			});
-		</script>
+		});
+	</script>
 
 
-	</head>
-	<body>
-		
-		<div id='available'>
-			Available Games
+</head>
 
-		</div>
+<body>
 
-		<div>
-			<span class="btn btn-primary" id="createRoom">Create Room</span>
-			<span class="btn btn-warning" id="getRooms">Get Rooms</span>
-		</div>
+	<div id='available'>
+		Available Games
+
+	</div>
+
+	<div>
+		<span class="btn btn-primary" id="createRoom">Create Room</span>
+		<span class="btn btn-warning" id="getRooms">Get Rooms</span>
+	</div>
 
 
 
-	</body>
+</body>
 
 </html>

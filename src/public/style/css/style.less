@@ -1,9 +1,15 @@
 @font-face {
-  font-family: 'cardFont';
-  src: url('../font/Campanile.ttf');
+  font-family: "cardFont";
+  src: url("../font/Campanile.ttf");
 }
 
-*,*:before, *:after {
+body {
+  background: red;
+}
+
+*,
+*:before,
+*:after {
   box-sizing: border-box;
 }
 
@@ -12,12 +18,12 @@
   width: 80px;
   height: 80px;
   border: 1px solid black;
-  font-family: 'cardFont';
+  font-family: "cardFont";
   font-size: 20px;
 }
 
 .other {
-  opacity: .5;
+  opacity: 0.5;
 }
 
 .selected {
@@ -26,7 +32,10 @@
   font-weight: bold;
 }
 
-.spade, .clover, .diamond, .heart {
+.spade,
+.clover,
+.diamond,
+.heart {
   background-image: url(../images/card_icons_resized.png);
   width: 25px;
   height: 25px;
@@ -52,7 +61,7 @@
   background-image: url(../images/goyard.jpg);
 }
 
-.player { 
+.player {
   display: table;
 }
 
@@ -60,7 +69,7 @@
   border: 2px red solid;
 }
 
-#turnData { 
+#turnData {
   text-align: center;
 
   > * {

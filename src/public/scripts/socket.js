@@ -1,170 +1,167 @@
 if (typeof socket === "undefined") {
-	socket = io.connect('http://localhost:3000');
+  socket = io.connect("http://localhost:3000");
 }
 
-
-socket.on('connect' , function() {
-	console.log("Your socket.id is " + socket.id);
+socket.on("connect", function() {
+  console.log("Your socket.id is " + socket.id);
 });
 
-socket.on('setUpPlayer', function(data) {
-	console.log('settingup player');
-	
-	setupLocalGame(data);
+socket.on("setUpPlayer", function(data) {
+  console.log("settingup player");
 
-	cleanPage();
-	localGame.displayCards();
+  setupLocalGame(data);
 
-	displayGameData();
+  cleanPage();
+  localGame.displayCards();
+
+  displayGameData();
 });
 
-socket.on('reconnectGame', function(data) {
-	console.log('reconnecting');
+socket.on("reconnectGame", function(data) {
+  console.log("reconnecting");
 
-	setupLocalGame(data);
+  setupLocalGame(data);
 
-	cleanPage();
-	localGame.displayCards();
-	highlightSelected();
+  cleanPage();
+  localGame.displayCards();
+  highlightSelected();
 
-	displayGameData();
+  displayGameData();
 });
 
-socket.on('playedCards', function(d) {
+socket.on("playedCards", function(d) {
+  localGame = new Game(d.cg);
+  thisPlayer = localGame.players[thisPlayerIndex];
 
-	localGame = new Game(d.cg);
-	thisPlayer = localGame.players[thisPlayerIndex];
+  var i = localGame.findPlayerIndex(d.updatedPlayer);
 
-	var i = localGame.findPlayerIndex(d.updatedPlayer);
+  var cardsToRemove = localGame.lastPlayedHand.cards.length;
+  for (var j = 0; j < cardsToRemove; j++) {
+    $("#player" + (i + 1) + ">div.hand>div.card")[0].remove();
+  }
 
-	var cardsToRemove = localGame.lastPlayedHand.cards.length;
-	for (var j=0; j<cardsToRemove; j++) {
-		$('#player'+(i+1)+'>div.hand>div.card')[0].remove();
-	}
-
-	displayGameData();
-	console.log('player ' + (i+1) + ' played cards');
-
+  displayGameData();
+  console.log("player " + (i + 1) + " played cards");
 });
 
-socket.on('readyToPlayCards', function(data) {
+socket.on("readyToPlayCards", function(data) {
+  localGame = new Game(data);
+  thisPlayer = localGame.players[thisPlayerIndex];
+  var cardsToPlay = new Hand(thisPlayer.selectedCards);
 
-	localGame = new Game(data);
-	thisPlayer = localGame.players[thisPlayerIndex];
-	var cardsToPlay = new Hand(thisPlayer.selectedCards);
+  if (localGame.lastPlayedHand.val === undefined) {
+    createFakeHand();
+  }
 
-	if (localGame.lastPlayedHand.val === undefined) { createFakeHand(); }
+  var isPlayersTurn = thisPlayerIndex === localGame.currentPlayer;
 
+  if (
+    isPlayersTurn &&
+    cardsToPlay.followsRule() &&
+    cardsToPlay.beats(localGame.lastPlayedHand)
+  ) {
+    console.log("Gameplay:follows rule and beats lastplayed");
 
-	
-	var isPlayersTurn = (thisPlayerIndex === localGame.currentPlayer);
+    var selectedPlayer = $("#player" + thisPlayerIndex.toDivNum());
+    var cardsToRemove = selectedPlayer.find(".selected");
+    cardsToRemove.remove();
 
-	if (isPlayersTurn && cardsToPlay.followsRule() && cardsToPlay.beats(localGame.lastPlayedHand)) {
-		console.log('Gameplay:follows rule and beats lastplayed');			
+    //updates localGame and thisPlayer and then pushes changes to server to push to other players
+    thisPlayer.playCards();
 
-		var selectedPlayer = $('#player' + thisPlayerIndex.toDivNum());
-		var cardsToRemove = selectedPlayer.find('.selected');
-		cardsToRemove.remove();
+    displayGameData();
+  } else {
+    displayError();
+  }
+  console.log("----------------finished playCard----------");
 
-		//updates localGame and thisPlayer and then pushes changes to server to push to other players
-		thisPlayer.playCards();
+  function createFakeHand() {
+    //If first move of a turn
+    //Create a fakeHand that has same type but a lower value
+    console.log("No lastPlayedHand.val");
+    var fakeHand = new Hand(thisPlayer.selectedCards);
+    fakeHand.val.highest = new Card(-1, -1);
+    localGame.lastPlayedHand = fakeHand;
+  }
 
-		displayGameData();
-	} else { displayError(); }
-	console.log('----------------finished playCard----------');
+  function displayError() {
+    var errorMessage = "";
 
-	function createFakeHand() {
+    if (thisPlayerIndex !== localGame.currentPlayer) {
+      errorMessage += "Not your turn\n";
+    }
 
-		//If first move of a turn
-		//Create a fakeHand that has same type but a lower value
-		console.log('No lastPlayedHand.val');
-		var fakeHand = new Hand(thisPlayer.selectedCards);
-		fakeHand.val.highest = new Card(-1,-1);
-		localGame.lastPlayedHand = fakeHand;
-	}
+    if (!cardsToPlay.followsRule()) {
+      errorMessage +=
+        "Hand does not follow rule " + localGame.currentRule + "\n";
 
-	function displayError() {
+      var containsThreeOfSpades = cardsToPlay.findCard(threeOfSpades) !== -1;
+      if (!containsThreeOfSpades) {
+        errorMessage += "Must have 3 of Spades";
+      }
+    }
 
-		var errorMessage = "";
-
-		if ( thisPlayerIndex !== localGame.currentPlayer ) {
-			errorMessage += "Not your turn\n";
-		}
-
-		if ( !cardsToPlay.followsRule() ) {
-			errorMessage += "Hand does not follow rule " + localGame.currentRule + "\n";
-
-			var containsThreeOfSpades = (cardsToPlay.findCard(threeOfSpades) !== -1);
-			if (!containsThreeOfSpades) {
-				errorMessage += "Must have 3 of Spades";
-			}
-		}
-
-		if ( !cardsToPlay.beats(localGame.lastPlayedHand) ) {
-			errorMessage += "Hand does not beat last played Hand\n";
-		}
-		alert(errorMessage);
-	}
-
+    if (!cardsToPlay.beats(localGame.lastPlayedHand)) {
+      errorMessage += "Hand does not beat last played Hand\n";
+    }
+    alert(errorMessage);
+  }
 });
 
+socket.on("skipTurn", function(d) {
+  localGame = new Game(d.cg);
 
-socket.on('skipTurn', function(d) {
+  console.log(socket.id + " skippedTurn");
 
-	localGame = new Game(d.cg);
-
-	console.log(socket.id + ' skippedTurn');
-
-	if (d.newTurn) {
-		localGame.lastPlayedHand = lastPlayedHand = null;
-		var leader = localGame.turnData.indexOf("Start");
-		alert("onEmit skip New Turn.  Player " + (leader+1) + " starts.  This is Player " + thisPlayerIndex);
-		$('#currentRule').html("None");
-		$('#lastPlayed>.hand').html("");
-	}
-	displayGameData();
-
+  if (d.newTurn) {
+    localGame.lastPlayedHand = lastPlayedHand = null;
+    var leader = localGame.turnData.indexOf("Start");
+    alert(
+      "onEmit skip New Turn.  Player " +
+        (leader + 1) +
+        " starts.  This is Player " +
+        thisPlayerIndex
+    );
+    $("#currentRule").html("None");
+    $("#lastPlayed>.hand").html("");
+  }
+  displayGameData();
 });
 
-socket.on('createdRoom', function(roomNum){
-	console.log('createdRoom');
+socket.on("createdRoom", function(roomNum) {
+  console.log("createdRoom");
 
-	$('body').load('/room');
-
+  $("body").load("/room");
 });
 
-socket.on('leftRoom', function(roomNum){
-	console.log('leftRoom');
+socket.on("leftRoom", function(roomNum) {
+  console.log("leftRoom");
 
-	$('body').load('/', function() {
-		$('title').html('Home');
-		
-	});
+  $("body").load("/", function() {
+    $("title").html("Home");
+  });
 });
-
 
 function setupLocalGame(newData) {
-	thisPlayerIndex = newData.playerIndex;
-	localGame = new Game(newData.updatedGame);
-	thisPlayer = localGame.players[newData.playerIndex];
+  console.log(newData);
+  thisPlayerIndex = newData.playerIndex;
+  localGame = new Game(newData.updatedGame);
+  thisPlayer = localGame.players[newData.playerIndex];
 }
-
 
 //Clears any previously added Cards, and shows only the user's buttons
 function cleanPage() {
+  //clear cards so that new cards can be added
+  $(".card").remove();
 
-	//clear cards so that new cards can be added
-	$('.card').remove();
-
-	//hide other player's buttons
-	var a = thisPlayerIndex.toDivNum();
-	$('.btn').show();
-	$('.player').each(function() {
-		var $curr = $(this);
-		var playerNum = $curr.attr('id').getLastChar();
-		if (a != playerNum) {
-			$curr.find('.btn').hide();
-		}
-	});
-
+  //hide other player's buttons
+  var a = thisPlayerIndex.toDivNum();
+  $(".btn").show();
+  $(".player").each(function() {
+    var $curr = $(this);
+    var playerNum = $curr.attr("id").getLastChar();
+    if (a != playerNum) {
+      $curr.find(".btn").hide();
+    }
+  });
 }
