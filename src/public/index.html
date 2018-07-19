@@ -57,6 +57,8 @@
 		socket.on('gotRooms', function (rooms) {
 			console.log('gotRooms');
 
+			console.log(rooms)
+
 			if (rooms.length === 0) { $('#available').html('None'); }
 			else {
 				var availableRoomsHTML = "";
@@ -64,8 +66,8 @@
 				for (var i = 0; i < rooms.length; i++) {
 
 					availableRoomsHTML += '<span class="btn btn-success joinRoom" ';
-					availableRoomsHTML += 'alt="' + rooms[i] + '">';
-					availableRoomsHTML += rooms[i] + '</span>';
+					availableRoomsHTML += 'alt="' + rooms[i].id + '">';
+					availableRoomsHTML += rooms[i].id + '</span>';
 
 
 					console.log(rooms[i]);

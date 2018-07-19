@@ -93,19 +93,19 @@ io.on("connection", function(socket) {
 	*/
 
   socket.on("createRoom", function() {
+    // Initialize room with id, first player
+    // Then Push to global rooms array
     var roomNum = Math.floor(Math.random() * 10000);
 
     var room = {};
+    room.gameStarted = false;
     room.id = roomNum;
     room.players = [];
 
-    var newPlayer = {};
-    newPlayer.id = socket.id;
-    newPlayer.num = room.players.length;
-
-    room.players.push(newPlayer);
-
-    room.gameStarted = false;
+    var firstPlayer = {};
+    firstPlayer.id = socket.id;
+    firstPlayer.num = room.players.length;
+    room.players.push(firstPlayer);
 
     rooms.push(room);
 
@@ -128,19 +128,18 @@ io.on("connection", function(socket) {
   });
 
   socket.on("joinRoom", function(roomNum) {
-    console.log("Join Room");
-
-    console.log(socket.id + " joining room " + roomNum);
+    // Emit joinedRoom so browser loads /rooms
+    console.log("Join Room: " + socket.id + " joining room " + roomNum);
     socket.join(roomNum);
     io.to(socket.id).emit("joinedRoom", roomNum);
 
-    var thisRoom;
-
+    // Find the room with roomNum
+    // Add the player that just joined room
+    // If there are 4 players, set up game
     for (var i = 0; i < rooms.length; i++) {
-      thisRoom = rooms[i];
+      var thisRoom = rooms[i];
       console.log(thisRoom);
       if (thisRoom.id == roomNum) {
-        console.log("Found room");
         var newPlayer = {};
         newPlayer.id = socket.id;
         newPlayer.num = thisRoom.players.length;
@@ -155,24 +154,19 @@ io.on("connection", function(socket) {
 
           for (var j = 0; j < thisRoom.players.length; j++) {
             var thisPlayer = thisRoom.players[j];
-            console.log(
-              "Found player index " + j + "socketID: " + thisPlayer.id
-            );
 
             io.to(thisPlayer.id).emit("setUpPlayer", {
               playerIndex: j,
               updatedGame: thisRoom.game
             });
 
+            // Emit to last player a second later because page needs to be loaded so it can receive emitted event.
             if (j === 3) {
               setTimeout(
                 function(thisRoom) {
                   console.log("Emit to player 4");
-                  console.log(thisRoom);
-                  console.log(thisRoom.game);
-                  console.log(rooms);
                   io.to(thisPlayer.id).emit("setUpPlayer", {
-                    playerIndex: j,
+                    playerIndex: 3,
                     updatedGame: thisRoom.game
                   });
                 },
@@ -348,7 +342,7 @@ function checkRooms() {
       var isRoom = room !== sock && allSockets[room] === undefined;
       var notAdded = rooms.indexOf(room) === -1;
       if (isRoom && notAdded) {
-        rooms.push(room);
+        //rooms.push(room);
         break;
       }
     }
