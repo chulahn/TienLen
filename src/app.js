@@ -16,7 +16,7 @@ var fileRouter = require("./fileRouter.js");
 app.use("/", fileRouter);
 
 app.get("/", function(req, res) {
-  res.sendfile("./public/room.html");
+  res.sendfile("./public/index.html");
 });
 
 app.get("/room", function(req, res) {
@@ -48,45 +48,143 @@ io.on("connection", function(socket) {
 
   socketIds.push(socket.id);
 
-  if (gameStarted === false) {
+  // if (gameStarted === false) {
+  // var newPlayer = {};
+  // newPlayer.id = socket.id;
+  // newPlayer.num = players.length;
+
+  //   players.push(newPlayer);
+
+  //   if (players.length === 4) {
+  //     console.log("Starting Game");
+  //     gameStarted = true;
+  //     cg = new Game(players);
+  //     cg.findStartingPlayer();
+  //     emitEach("setUpPlayer");
+  //   }
+  // } else {
+  //   //Game already started, but some player(s) disconnected.
+  //   if (players.length < 4) {
+  //     //Get the first disconnected Player, change id to current socket's id
+  //     var newConnected = missingPlayers.shift();
+  //     newConnected.id = socket.id;
+  //     players.push(newConnected); //push object containing id and num
+  //     console.log(players);
+
+  //     //Update Server's Game object with new Player id
+  //     cg.players[newConnected.num].id = newConnected.id;
+
+  //     //4 Players are connected, Update everyones game
+  //     if (players.length === 4) {
+  //       console.log("reconnectingGame");
+  //       emitEach("reconnectGame");
+  //     }
+  //   } else if (players.length === 4) {
+  //     console.log("Spectactor joined");
+  //     io.to(socket.id).emit("reconnectGame", {
+  //       playerIndex: socketIds.length - 1,
+  //       updatedGame: cg
+  //     });
+  //   }
+  // }
+
+  /*
+		Room Handlers
+	*/
+
+  socket.on("createRoom", function() {
+    var roomNum = Math.floor(Math.random() * 10000);
+
+    var room = {};
+    room.id = roomNum;
+    room.players = [];
+
     var newPlayer = {};
     newPlayer.id = socket.id;
-    newPlayer.num = players.length;
+    newPlayer.num = room.players.length;
 
-    players.push(newPlayer);
+    room.players.push(newPlayer);
 
-    if (players.length === 4) {
-      console.log("Starting Game");
-      gameStarted = true;
-      cg = new Game(players);
-      cg.findStartingPlayer();
-      emitEach("setUpPlayer");
-    }
-  } else {
-    //Game already started, but some player(s) disconnected.
-    if (players.length < 4) {
-      //Get the first disconnected Player, change id to current socket's id
-      var newConnected = missingPlayers.shift();
-      newConnected.id = socket.id;
-      players.push(newConnected); //push object containing id and num
-      console.log(players);
+    room.gameStarted = false;
 
-      //Update Server's Game object with new Player id
-      cg.players[newConnected.num].id = newConnected.id;
+    rooms.push(room);
 
-      //4 Players are connected, Update everyones game
-      if (players.length === 4) {
-        console.log("reconnectingGame");
-        emitEach("reconnectGame");
+    socket.join(roomNum);
+    console.log(socket.id + " created/joining " + roomNum);
+    io.to(socket.id).emit("createdRoom", roomNum);
+  });
+
+  socket.on("leaveRoom", function(roomNum) {
+    console.log(socket.id + " leaving room " + roomNum);
+    socket.leave(roomNum);
+    io.to(socket.id).emit("leftRoom");
+  });
+
+  //Sends the client an array of available rooms
+  socket.on("getRooms", function() {
+    console.log("gettingRooms");
+    checkRooms();
+    socket.emit("gotRooms", rooms);
+  });
+
+  socket.on("joinRoom", function(roomNum) {
+    console.log("Join Room");
+
+    console.log(socket.id + " joining room " + roomNum);
+    socket.join(roomNum);
+    io.to(socket.id).emit("joinedRoom", roomNum);
+
+    var thisRoom;
+
+    for (var i = 0; i < rooms.length; i++) {
+      thisRoom = rooms[i];
+      console.log(thisRoom);
+      if (thisRoom.id == roomNum) {
+        console.log("Found room");
+        var newPlayer = {};
+        newPlayer.id = socket.id;
+        newPlayer.num = thisRoom.players.length;
+
+        thisRoom.players.push(newPlayer);
+
+        if (thisRoom.players.length === 4) {
+          console.log("Room is ready to start");
+          thisRoom.gameStarted = true;
+          thisRoom.game = new Game(thisRoom.players);
+          thisRoom.game.findStartingPlayer();
+
+          for (var j = 0; j < thisRoom.players.length; j++) {
+            var thisPlayer = thisRoom.players[j];
+            console.log(
+              "Found player index " + j + "socketID: " + thisPlayer.id
+            );
+
+            io.to(thisPlayer.id).emit("setUpPlayer", {
+              playerIndex: j,
+              updatedGame: thisRoom.game
+            });
+
+            if (j === 3) {
+              setTimeout(
+                function(thisRoom) {
+                  console.log("Emit to player 4");
+                  console.log(thisRoom);
+                  console.log(thisRoom.game);
+                  console.log(rooms);
+                  io.to(thisPlayer.id).emit("setUpPlayer", {
+                    playerIndex: j,
+                    updatedGame: thisRoom.game
+                  });
+                },
+                1000,
+                thisRoom
+              );
+            }
+          }
+        }
       }
-    } else if (players.length === 4) {
-      console.log("Spectactor joined");
-      io.to(socket.id).emit("reconnectGame", {
-        playerIndex: socketIds.length - 1,
-        updatedGame: cg
-      });
     }
-  }
+  });
 
   socket.on("disconnect", function() {
     //Remove disconnected Player's socket
@@ -186,36 +284,6 @@ io.on("connection", function(socket) {
       console.log("newTurn".yellow);
     }
     socket.broadcast.emit("skipTurn", { cg: cg, newTurn: newTurn });
-  });
-
-  /*
-		Room Handlers
-	*/
-
-  socket.on("createRoom", function() {
-    var roomNum = Math.floor(Math.random() * 10000);
-    socket.join(roomNum);
-    console.log(socket.id + " created/joining " + roomNum);
-    io.to(socket.id).emit("createdRoom", roomNum);
-  });
-
-  socket.on("leaveRoom", function(roomNum) {
-    console.log(socket.id + " leaving room " + roomNum);
-    socket.leave(roomNum);
-    io.to(socket.id).emit("leftRoom");
-  });
-
-  //Sends the client an array of available rooms
-  socket.on("getRooms", function() {
-    console.log("gettingRooms");
-    checkRooms();
-    socket.emit("gotRooms", rooms);
-  });
-
-  socket.on("joinRoom", function(roomNum) {
-    console.log(socket.id + " joining room " + roomNum);
-    socket.join(roomNum);
-    io.to(socket.id).emit("joinedRoom", roomNum);
   });
 });
 
