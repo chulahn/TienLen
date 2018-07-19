@@ -42,6 +42,8 @@
 
 		});
 
+		socket.emit('getRooms');
+
 		socket.on('createdRoom', function (roomNum) {
 			console.log('createdRoom');
 
