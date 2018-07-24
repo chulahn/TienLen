@@ -128,9 +128,11 @@ io.on("connection", function(socket) {
   });
 
   socket.on("joinRoom", function(roomNum) {
-    // Emit joinedRoom so browser loads /rooms
     console.log("Join Room: " + socket.id + " joining room " + roomNum);
     socket.join(roomNum);
+
+    // Emit joinedRoom so browser loads /rooms
+    // $('body').load('/room/'
     io.to(socket.id).emit("joinedRoom", roomNum);
 
     // Find the room with roomNum
@@ -138,7 +140,7 @@ io.on("connection", function(socket) {
     // If there are 4 players, set up game
     for (var i = 0; i < rooms.length; i++) {
       var thisRoom = rooms[i];
-      console.log(thisRoom);
+      console.log("thisRoom: ", thisRoom);
       if (thisRoom.id == roomNum) {
         var newPlayer = {};
         newPlayer.id = socket.id;
@@ -148,10 +150,12 @@ io.on("connection", function(socket) {
 
         if (thisRoom.players.length === 4) {
           console.log("Room is ready to start");
+          // Initialize room.
           thisRoom.gameStarted = true;
           thisRoom.game = new Game(thisRoom.players);
           thisRoom.game.findStartingPlayer();
 
+          // Emit to each player their index and Game object.
           for (var j = 0; j < thisRoom.players.length; j++) {
             var thisPlayer = thisRoom.players[j];
 
