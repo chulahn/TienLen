@@ -222,12 +222,53 @@ io.on("connection", function(socket) {
 		Game Handlers
 	*/
 
-  //Updates Player's selectedCards on Server's game object
+  // Updates Player's selectedCards on Server's game object
   socket.on("clickedCard", function(data) {
-    if (data !== undefined) {
-      cg.players[data.playerNum].selectedCards = data.selectedCards;
-      console.log("Player " + (data.playerNum + 1));
-      console.log(cg.players[data.playerNum].selectedCards);
+    console.log("clickedCard: ", socket.id, " data: ", data);
+    console.log("-rooms", rooms);
+
+    function checkSocketInRoom(thisRoom, socketId) {
+      for (var j = 0; j < thisRoom.players.length; j++) {
+        var thisPlayer = thisRoom.players[j];
+        console.log("thisPlayer: ", thisPlayer);
+
+        if (thisPlayer.id === socketId) {
+          console.log(
+            "Found room: ",
+            j,
+            " roomId: ",
+            thisRoom.id,
+            " socket: ",
+            socketId
+          );
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Find the room where socket is in
+    for (var i = 0; i < rooms.length; i++) {
+      var thisRoom = rooms[i];
+
+      console.log("thisRoom: ", thisRoom);
+
+      // If Socket is in that room, update server's data with selectedCards
+      if (checkSocketInRoom(thisRoom, socket.id)) {
+        console.log("Socket ", socket.id, " is in Room ", thisRoom.id);
+        if (data !== undefined) {
+          thisRoom.game.players[data.playerNum].selectedCards =
+            data.selectedCards;
+          console.log(
+            "Player ",
+            data.playerNum + 1,
+            " Cards: ",
+            thisRoom.game.players[data.playerNum].selectedCards
+          );
+        }
+      } else {
+        console.log("Socket not in Room ", thisRoom.id);
+      }
     }
   });
 
