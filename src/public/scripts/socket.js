@@ -79,7 +79,7 @@ socket.on("readyToPlayCards", function(data) {
   function createFakeHand() {
     //If first move of a turn
     //Create a fakeHand that has same type but a lower value
-    console.log("No lastPlayedHand.val");
+    console.log("createFakeHand", thisPlayer.selectedCards);
     var fakeHand = new Hand(thisPlayer.selectedCards);
     fakeHand.val.highest = new Card(-1, -1);
     localGame.lastPlayedHand = fakeHand;

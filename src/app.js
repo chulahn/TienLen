@@ -253,8 +253,8 @@ io.on("connection", function(socket) {
     }
 
     // Find the room where socket is in
-    for (var i = 0; i < rooms.length; i++) {
-      var thisRoom = rooms[i];
+    for (var i = 0; i < Glo.rooms.length; i++) {
+      var thisRoom = Glo.rooms[i];
 
       console.log("thisRoom: ", thisRoom);
 
@@ -277,18 +277,45 @@ io.on("connection", function(socket) {
     }
   });
 
-  //Called when a player is making a move.
-  //Server send's its game so that player can call playCards
+  // Called when a player is making a move. Eg. play or skip
+  // Server send's its game so that player can call playCards
   socket.on("getGameData", function(action) {
-    console.log(socket.id + " requested gameData action was ".green + action);
+    console.log(socket.id + " on gameData action was ".green, action);
 
-    function getRoomNumber(socketId) {
-      io.sockets.sockets.length;
+    // Get Room Number based socket's id.
+
+    function getRoomNumberFromSocketId(socketId) {
+      // io.sockets.sockets.length;
+      for (var i = 0; i < Glo.rooms.length; i++) {
+        var thisRoom = Glo.rooms[i];
+        console.log("thisRoom: ", thisRoom);
+
+        for (var j = 0; j < thisRoom.players.length; j++) {
+          var thisPlayer = thisRoom.players[j];
+          console.log("thisPlayer: ", thisPlayer);
+
+          if (thisPlayer.id === socketId) {
+            console.log(
+              "Found room: ",
+              j,
+              " roomId: ",
+              thisRoom.id,
+              " socket: ",
+              socketId
+            );
+            return i;
+          }
+        }
+      }
     }
 
     switch (action) {
       case "play":
-        socket.emit("readyToPlayCards", cg);
+        var roomIndex = getRoomNumberFromSocketId(socket.id);
+        var roomToUpdate = Glo.rooms[roomIndex];
+        console.log("emitting readyToPlayCards Play ".red, roomToUpdate.game);
+
+        socket.emit("readyToPlayCards", roomToUpdate.game);
         break;
       // case "skip";
       // 	socket.emit('')
