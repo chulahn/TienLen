@@ -45,6 +45,7 @@ socket.on("playedCards", function(d) {
 });
 
 socket.on("readyToPlayCards", function(data) {
+  console.log("readyToPlaycards data: ", data);
   localGame = new Game(data);
   thisPlayer = localGame.players[thisPlayerIndex];
   var cardsToPlay = new Hand(thisPlayer.selectedCards);

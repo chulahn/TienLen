@@ -29,6 +29,11 @@ app.get("/room/:roomNum", function(req, res) {
 
 var cg = exports.currentGame;
 
+var Glo = {};
+Glo.socketIds = [];
+Glo.rooms = [];
+Glo.players = [];
+
 //array of strings
 var socketIds = [];
 var rooms = [];
@@ -39,62 +44,30 @@ var missingPlayers = [];
 
 var gameStarted = false;
 
+// Connect to Socket
 io.on("connection", function(socket) {
   var connectedUsers = io.sockets.sockets.length;
-  console.log(connectedUsers + " users" + " : " + socket.id + " has connected");
+  console.log(
+    connectedUsers,
+    " users(io.sockets.sockets.length): ",
+    socket.id,
+    " has connected"
+  );
+
   // var sessionid = socket.io.engine.id;
   //console.log(socket);
   // console.log(io.nsps['/'].adapter.rooms)
 
+  // Push connected user to array of socketIds
   socketIds.push(socket.id);
-
-  // if (gameStarted === false) {
-  // var newPlayer = {};
-  // newPlayer.id = socket.id;
-  // newPlayer.num = players.length;
-
-  //   players.push(newPlayer);
-
-  //   if (players.length === 4) {
-  //     console.log("Starting Game");
-  //     gameStarted = true;
-  //     cg = new Game(players);
-  //     cg.findStartingPlayer();
-  //     emitEach("setUpPlayer");
-  //   }
-  // } else {
-  //   //Game already started, but some player(s) disconnected.
-  //   if (players.length < 4) {
-  //     //Get the first disconnected Player, change id to current socket's id
-  //     var newConnected = missingPlayers.shift();
-  //     newConnected.id = socket.id;
-  //     players.push(newConnected); //push object containing id and num
-  //     console.log(players);
-
-  //     //Update Server's Game object with new Player id
-  //     cg.players[newConnected.num].id = newConnected.id;
-
-  //     //4 Players are connected, Update everyones game
-  //     if (players.length === 4) {
-  //       console.log("reconnectingGame");
-  //       emitEach("reconnectGame");
-  //     }
-  //   } else if (players.length === 4) {
-  //     console.log("Spectactor joined");
-  //     io.to(socket.id).emit("reconnectGame", {
-  //       playerIndex: socketIds.length - 1,
-  //       updatedGame: cg
-  //     });
-  //   }
-  // }
+  Glo.socketIds.push(socket.id);
 
   /*
 		Room Handlers
 	*/
 
   socket.on("createRoom", function() {
-    // Initialize room with id, first player
-    // Then Push to global rooms array
+    // Initialize room with id, and connected first player
     var roomNum = Math.floor(Math.random() * 10000);
 
     var room = {};
@@ -107,8 +80,10 @@ io.on("connection", function(socket) {
     firstPlayer.num = room.players.length;
     room.players.push(firstPlayer);
 
-    rooms.push(room);
+    // Then Push to Global rooms array
+    Glo.rooms.push(room);
 
+    // Put Socket in room, and emit createdRoom.
     socket.join(roomNum);
     console.log(socket.id + " created/joining " + roomNum);
     io.to(socket.id).emit("createdRoom", roomNum);
@@ -120,26 +95,29 @@ io.on("connection", function(socket) {
     io.to(socket.id).emit("leftRoom");
   });
 
-  //Sends the client an array of available rooms
+  // Sends the client an array of available rooms
+  // index.html receives rooms [] => .id and .players
   socket.on("getRooms", function() {
     console.log("gettingRooms");
     checkRooms();
-    socket.emit("gotRooms", rooms);
+    socket.emit("gotRooms", Glo.rooms);
   });
 
   socket.on("joinRoom", function(roomNum) {
-    console.log("Join Room: " + socket.id + " joining room " + roomNum);
+    // Join socket room
+    console.log("Join Room: ", socket.id, " joining room ", roomNum);
     socket.join(roomNum);
+    //log about selected room
 
-    // Emit joinedRoom so browser loads /rooms
+    // Emit joinedRoom so browser index.html loads /rooms
     // $('body').load('/room/'
     io.to(socket.id).emit("joinedRoom", roomNum);
 
-    // Find the room with roomNum
+    // Find the room with roomNum from Globals
     // Add the player that just joined room
     // If there are 4 players, set up game
-    for (var i = 0; i < rooms.length; i++) {
-      var thisRoom = rooms[i];
+    for (var i = 0; i < Glo.rooms.length; i++) {
+      var thisRoom = Glo.rooms[i];
       console.log("thisRoom: ", thisRoom);
       if (thisRoom.id == roomNum) {
         var newPlayer = {};
@@ -156,9 +134,11 @@ io.on("connection", function(socket) {
           thisRoom.game.findStartingPlayer();
 
           // Emit to each player their index and Game object.
+          // So localGame can be updated
           for (var j = 0; j < thisRoom.players.length; j++) {
             var thisPlayer = thisRoom.players[j];
 
+            // Room.ejs /socket.js
             io.to(thisPlayer.id).emit("setUpPlayer", {
               playerIndex: j,
               updatedGame: thisRoom.game
@@ -180,6 +160,31 @@ io.on("connection", function(socket) {
             }
           }
         }
+
+        // if game has started, but has < 4 players
+        //   if (players.length < 4) {
+        //     //Get the first disconnected Player, change id to current socket's id
+        //     var newConnected = missingPlayers.shift();
+        //     newConnected.id = socket.id;
+        //     players.push(newConnected); //push object containing id and num
+        //     console.log(players);
+
+        //     //Update Server's Game object with new Player id
+        //     cg.players[newConnected.num].id = newConnected.id;
+
+        //     //4 Players are connected, Update everyones game
+        //     if (players.length === 4) {
+        //       console.log("reconnectingGame");
+        //       emitEach("reconnectGame");
+        //     }
+        //   } else if (players.length === 4) {
+        //     console.log("Spectactor joined");
+        //     io.to(socket.id).emit("reconnectGame", {
+        //       playerIndex: socketIds.length - 1,
+        //       updatedGame: cg
+        //     });
+        //   }
+        // }
       }
     }
   });
@@ -276,6 +281,10 @@ io.on("connection", function(socket) {
   //Server send's its game so that player can call playCards
   socket.on("getGameData", function(action) {
     console.log(socket.id + " requested gameData action was ".green + action);
+
+    function getRoomNumber(socketId) {
+      io.sockets.sockets.length;
+    }
 
     switch (action) {
       case "play":
