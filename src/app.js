@@ -334,6 +334,9 @@ io.on("connection", function(socket) {
     });
   });
 
+  /*
+		TODO HANDLERS
+	*/
   // TODO: UPDATE .  check on(leftRoom)
   socket.on("leaveRoom", function(roomNum) {
     console.log(socket.id + " leaving room " + roomNum);
