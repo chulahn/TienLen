@@ -66,6 +66,15 @@ io.on("connection", function(socket) {
 		Room Handlers
 	*/
 
+  // Sends the client an array of available rooms
+  // index.html receives rooms [] => .id and .players
+  socket.on("getRooms", function() {
+    console.log("gettingRooms");
+    checkRooms();
+    socket.emit("gotRooms", Glo.rooms);
+  });
+
+  // Create a Room Obj, and push to Globals
   socket.on("createRoom", function() {
     // Initialize room with id, and connected first player
     var roomNum = Math.floor(Math.random() * 10000);
@@ -89,45 +98,45 @@ io.on("connection", function(socket) {
     io.to(socket.id).emit("createdRoom", roomNum);
   });
 
-  socket.on("leaveRoom", function(roomNum) {
-    console.log(socket.id + " leaving room " + roomNum);
-    socket.leave(roomNum);
-    io.to(socket.id).emit("leftRoom");
-  });
-
-  // Sends the client an array of available rooms
-  // index.html receives rooms [] => .id and .players
-  socket.on("getRooms", function() {
-    console.log("gettingRooms");
-    checkRooms();
-    socket.emit("gotRooms", Glo.rooms);
-  });
-
+  // Create a playerObject and add to Glo.rooms[i].players
   socket.on("joinRoom", function(roomNum) {
     // Join socket room
-    console.log("Join Room: ", socket.id, " joining room ", roomNum);
+    console.log(
+      "Join Room: ".green,
+      socket.id,
+      " joining room ".green,
+      roomNum
+    );
     socket.join(roomNum);
-    //log about selected room
+    //TODO:log about selected room
 
-    // Emit joinedRoom so browser index.html loads /rooms
+    // Emit joinedRoom so browser:index.html loads /rooms
     // $('body').load('/room/'
     io.to(socket.id).emit("joinedRoom", roomNum);
 
     // Find the room with roomNum from Globals
-    // Add the player that just joined room
-    // If there are 4 players, set up game
     for (var i = 0; i < Glo.rooms.length; i++) {
       var thisRoom = Glo.rooms[i];
-      console.log("thisRoom: ", thisRoom);
+      console.log("joinRoom: thisRoom: ".yellow, thisRoom);
+
       if (thisRoom.id == roomNum) {
+        //TODO: If Game not started
+
+        //Add newPlayer with this socket, and player Number, to Glo.rooms[i].players
         var newPlayer = {};
         newPlayer.id = socket.id;
         newPlayer.num = thisRoom.players.length;
 
+        // Add the player that just joined room
         thisRoom.players.push(newPlayer);
 
-        if (thisRoom.players.length === 4) {
-          console.log("Room is ready to start");
+        // If there are 4 players, set up game
+        var readyToStart = thisRoom.players.length === 4;
+        if (readyToStart) {
+          console.log(
+            "joinRoom: Room is ready to start.  emitting to each player".yellow
+          );
+
           // Initialize room.
           thisRoom.gameStarted = true;
           thisRoom.game = new Game(thisRoom.players);
@@ -148,7 +157,7 @@ io.on("connection", function(socket) {
             if (j === 3) {
               setTimeout(
                 function(thisRoom) {
-                  console.log("Emit to player 4");
+                  console.log("joinRoom: Emit to player 4".yellow);
                   io.to(thisPlayer.id).emit("setUpPlayer", {
                     playerIndex: 3,
                     updatedGame: thisRoom.game
@@ -189,6 +198,164 @@ io.on("connection", function(socket) {
     }
   });
 
+  /*
+		Game Handlers
+	*/
+
+  // Called when a card is Clicked
+  // Updates Server's Global game object Player's selectedCards on
+  // data has .selectedCards and .playerNum
+  socket.on("clickedCard", function(data) {
+    console.log(
+      "clickedCard: ".green,
+      socket.id,
+      " data: ".green,
+      data.selectedCards
+    );
+
+    // socketId == thisRoom.players[j].id
+    function socketInRoom(thisRoom, socketId) {
+      for (var j = 0; j < thisRoom.players.length; j++) {
+        var thisPlayer = thisRoom.players[j];
+        console.log("socketInRoom thisPlayer: ".cyan, thisPlayer);
+
+        if (thisPlayer.id === socketId) {
+          console.log(
+            "socketInRoom: Found Player: ".cyan,
+            j + 1,
+            " roomId: ".cyan,
+            thisRoom.id,
+            " socket: ".cyan,
+            socketId
+          );
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Find the room where socket is in by going through each room and checking
+    for (var i = 0; i < Glo.rooms.length; i++) {
+      var thisRoom = Glo.rooms[i];
+      console.log("clickedCard: Finding room. thisRoom: ".yellow, thisRoom);
+
+      // If Player Socket is in that room, update server's Global data with data.selectedCards
+      if (socketInRoom(thisRoom, socket.id)) {
+        if (data !== undefined) {
+          thisRoom.game.players[data.playerNum].selectedCards =
+            data.selectedCards;
+          console.log(
+            "clickedCard: Player ".yellow,
+            data.playerNum + 1,
+            " Cards: ".yellow,
+            thisRoom.game.players[data.playerNum].selectedCards
+          );
+        }
+      } else {
+        console.log("clickedCard: Socket not in Room ".yellow, thisRoom.id);
+      }
+    }
+    console.log("clickedCard END: ".red, socket.id);
+  });
+
+  // Called when a player is making a move. Eg. play or skip
+  // Server send's its game by emit("readyToPlayCards") so that player can call playCards
+  socket.on("getGameData", function(action) {
+    console.log(
+      "getGameData: ".green,
+      socket.id,
+      " on gameData action was ".green,
+      action
+    );
+
+    switch (action) {
+      case "play":
+        // Get Room Number based socket's id.
+        var roomIndex = getRoomNumberFromSocketId(socket.id);
+        var roomToUpdate = Glo.rooms[roomIndex];
+        console.log(
+          "getGameData: emitting readyToPlayCards Play ".green,
+          roomToUpdate.game.players
+        );
+
+        socket.emit("readyToPlayCards", roomToUpdate.game);
+        break;
+      // case "skip";
+      // 	socket.emit('')
+    }
+    console.log("getGameData: END".red);
+  });
+
+  // Called after playCards. d .newGame and .updatedPlayer
+  socket.on("playCards", function(d) {
+    // Updates Player object on server's game object
+    console.log(
+      "playCards: updateGame('played', d.newGame, d.updatedPlayer, socket.id)"
+        .blue,
+      // cg,
+      " updatedPlayer cardsLeft:".blue,
+      d.updatedPlayer.hand.sortedCards.length,
+      " socket: ".blue,
+      socket.id
+    );
+    updateGame("played", d.newGame, d.updatedPlayer, socket.id);
+
+    var roomIndex = getRoomNumberFromSocketId(socket.id);
+    var roomToUpdate = Glo.rooms[roomIndex];
+    var cg = roomToUpdate.game;
+
+    var i = cg.findPlayerIndex(d.updatedPlayer);
+
+    if (cg.players[i].finished()) {
+      cg.addWinner(i);
+    }
+
+    console.log(
+      "playCards: Player ".blue,
+      i + 1,
+      " played cards----".blue,
+      socket.id
+    );
+    console.log(
+      "playCards: Leader is now ".blue,
+      cg.leader + 1,
+      " Current player:".blue,
+      cg.currentPlayer + 1
+    );
+
+    // Give updated game to client so Local can Refresh with cg and updatedPlayer
+    console.log(
+      "-----end playCards.  emitting playedCards to other players-----".red
+    );
+    // This emits to everyone.  Should only emit in Room
+    socket.broadcast.emit("playedCards", {
+      cg: cg,
+      updatedPlayer: d.updatedPlayer
+    });
+  });
+
+  // TODO: UPDATE .  check on(leftRoom)
+  socket.on("leaveRoom", function(roomNum) {
+    console.log(socket.id + " leaving room " + roomNum);
+    socket.leave(roomNum);
+    io.to(socket.id).emit("leftRoom");
+  });
+
+  // TODO: UPDATE.  get from Globals based on socketid
+  // Update turnData on server's game object
+  socket.on("skipTurn", function(clientGame) {
+    console.log("skipped turn".yellow + socket.id + " skipped turn".yellow);
+
+    updateGame("skip", clientGame);
+
+    var newTurn = cg.checkTurnData();
+    if (newTurn) {
+      console.log("newTurn".yellow);
+    }
+    socket.broadcast.emit("skipTurn", { cg: cg, newTurn: newTurn });
+  });
+
+  // TODO: UPDATE SO ITS COMPATIBLE
   socket.on("disconnect", function() {
     //Remove disconnected Player's socket
     var discPerson = socketIds.indexOf(socket.id);
@@ -221,144 +388,6 @@ io.on("connection", function(socket) {
       missingPlayers = [];
       gameStarted = false;
     }
-  });
-
-  /*
-		Game Handlers
-	*/
-
-  // Updates Player's selectedCards on Server's game object
-  socket.on("clickedCard", function(data) {
-    console.log("clickedCard: ", socket.id, " data: ", data);
-    console.log("-rooms", rooms);
-
-    function checkSocketInRoom(thisRoom, socketId) {
-      for (var j = 0; j < thisRoom.players.length; j++) {
-        var thisPlayer = thisRoom.players[j];
-        console.log("thisPlayer: ", thisPlayer);
-
-        if (thisPlayer.id === socketId) {
-          console.log(
-            "Found room: ",
-            j,
-            " roomId: ",
-            thisRoom.id,
-            " socket: ",
-            socketId
-          );
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // Find the room where socket is in
-    for (var i = 0; i < Glo.rooms.length; i++) {
-      var thisRoom = Glo.rooms[i];
-
-      console.log("thisRoom: ", thisRoom);
-
-      // If Socket is in that room, update server's data with selectedCards
-      if (checkSocketInRoom(thisRoom, socket.id)) {
-        console.log("Socket ", socket.id, " is in Room ", thisRoom.id);
-        if (data !== undefined) {
-          thisRoom.game.players[data.playerNum].selectedCards =
-            data.selectedCards;
-          console.log(
-            "Player ",
-            data.playerNum + 1,
-            " Cards: ",
-            thisRoom.game.players[data.playerNum].selectedCards
-          );
-        }
-      } else {
-        console.log("Socket not in Room ", thisRoom.id);
-      }
-    }
-  });
-
-  // Called when a player is making a move. Eg. play or skip
-  // Server send's its game so that player can call playCards
-  socket.on("getGameData", function(action) {
-    console.log(socket.id + " on gameData action was ".green, action);
-
-    // Get Room Number based socket's id.
-
-    function getRoomNumberFromSocketId(socketId) {
-      // io.sockets.sockets.length;
-      for (var i = 0; i < Glo.rooms.length; i++) {
-        var thisRoom = Glo.rooms[i];
-        console.log("thisRoom: ", thisRoom);
-
-        for (var j = 0; j < thisRoom.players.length; j++) {
-          var thisPlayer = thisRoom.players[j];
-          console.log("thisPlayer: ", thisPlayer);
-
-          if (thisPlayer.id === socketId) {
-            console.log(
-              "Found room: ",
-              j,
-              " roomId: ",
-              thisRoom.id,
-              " socket: ",
-              socketId
-            );
-            return i;
-          }
-        }
-      }
-    }
-
-    switch (action) {
-      case "play":
-        var roomIndex = getRoomNumberFromSocketId(socket.id);
-        var roomToUpdate = Glo.rooms[roomIndex];
-        console.log("emitting readyToPlayCards Play ".red, roomToUpdate.game);
-
-        socket.emit("readyToPlayCards", roomToUpdate.game);
-        break;
-      // case "skip";
-      // 	socket.emit('')
-    }
-    console.log("sentData".red);
-  });
-
-  //Updates Player object on server's game object
-  socket.on("playCards", function(d) {
-    updateGame("played", d.newGame, d.updatedPlayer);
-
-    var i = cg.findPlayerIndex(d.updatedPlayer);
-
-    if (cg.players[i].finished()) {
-      cg.addWinner(i);
-    }
-
-    console.log(
-      "----player " + (i + 1) + " played cards----".green + socket.id
-    );
-    console.log(
-      "Leader is now ",
-      +(cg.leader + 1) + " Current player:" + (cg.currentPlayer + 1)
-    );
-    console.log("-----end played cards.  emitting to other players-----".red);
-
-    socket.broadcast.emit("playedCards", {
-      cg: cg,
-      updatedPlayer: d.updatedPlayer
-    });
-  });
-
-  //Update turnData on server's game object
-  socket.on("skipTurn", function(clientGame) {
-    console.log("skipped turn".yellow + socket.id + " skipped turn".yellow);
-
-    updateGame("skip", clientGame);
-
-    var newTurn = cg.checkTurnData();
-    if (newTurn) {
-      console.log("newTurn".yellow);
-    }
-    socket.broadcast.emit("skipTurn", { cg: cg, newTurn: newTurn });
   });
 });
 
@@ -394,11 +423,57 @@ function emitEach(eventName, data) {
   }
 }
 
-//Called when a player plays cards or skip.
-function updateGame(action, clientGame, updatedPlayer) {
+function getRoomNumberFromSocketId(socketId) {
+  // io.sockets.sockets.length;
+  for (var i = 0; i < Glo.rooms.length; i++) {
+    var thisRoom = Glo.rooms[i];
+    console.log(
+      "getRoomNumberFromSocketId: ".cyan,
+      thisRoom.id,
+      " socket: ",
+      socketId
+    );
+
+    for (var j = 0; j < thisRoom.players.length; j++) {
+      var thisPlayer = thisRoom.players[j];
+      console.log("getRoomNumberFromSocketId: thisPlayer:".cyan, thisPlayer);
+
+      if (thisPlayer.id === socketId) {
+        console.log(
+          "getRoomNumberFromSocketId: Found room Player: ".cyan,
+          j + 1,
+          " roomId: ".cyan,
+          thisRoom.id,
+          " socket: ".cyan,
+          socketId
+        );
+        return i;
+      }
+    }
+  }
+}
+
+// Change cg to Glo.rooms[i].game
+// Called when a player plays cards or skip.
+function updateGame(action, clientGame, updatedPlayer, socketId) {
+  var roomIndex = getRoomNumberFromSocketId(socketId);
+  var roomToUpdate = Glo.rooms[roomIndex];
+
+  var cg = roomToUpdate.game;
+
+  console.log(
+    "updateGame: ".yellow,
+    // clientGame,
+    " updatedPlayer:".yellow,
+    updatedPlayer.num + 1,
+    " socket: ".yellow,
+    socketId
+  );
+
   cg.currentPlayer = clientGame.currentPlayer;
   cg.turnData = clientGame.turnData;
 
+  // update Global with updatedPlayer, lastPlayedHand, leader, and currentRule
   if (action === "played") {
     var i = cg.findPlayerIndex(updatedPlayer);
     cg.players[i] = updatedPlayer;
@@ -410,6 +485,12 @@ function updateGame(action, clientGame, updatedPlayer) {
     cg.leader = clientGame.leader;
     cg.currentRule = clientGame.currentRule;
   }
+
+  console.log(
+    "updateGame: Glo.rooms[roomIndex] == roomToUpdate".yellow,
+    Glo.rooms[roomIndex] == roomToUpdate
+  );
+  console.log("updateGame: END".red);
 }
 
 //Gets all created rooms and stores in room array

@@ -32,7 +32,7 @@ Game.prototype = {
   findPlayerIndex: function(player) {
     for (var i = 0; i < this.players.length; i++) {
       if (this.players[i].id === player.id) {
-        console.log("Found player at index " + i);
+        console.log("Game:Found player at index ".magenta + i);
         return i;
       }
     }

@@ -76,10 +76,10 @@ var Player = function(obj) {
   this.selectedCards = obj.selectedCards;
 };
 
-//Removes selected cards from Players hand, resets selected Cards and re-sorts hand.
-//Sets turnData, and leader and currentPlayer indexes.
-//Sets lastPlayedHand
-//Saves data locally and on server
+// Removes selected cards from Players hand, resets selected Cards and re-sorts hand.
+// Sets turnData, and leader and currentPlayer indexes.
+// Sets lastPlayedHand
+// Saves data locally and on server.  emit("playCards")
 Player.prototype.playCards = function() {
   "use strict";
   var playerHand = this.hand;
@@ -96,7 +96,10 @@ Player.prototype.playCards = function() {
     cardsToPlay.followsRule() &&
     cardsToPlay.beats(localGame.lastPlayedHand)
   ) {
-    console.log("Player:beats lastPlayedHand and valid");
+    console.log(
+      "Player.playCards:beats lastPlayedHand and valid ",
+      localGame.lastPlayedHand
+    );
     localGame.lastPlayedHand = cardsToPlay;
     localGame.currentRule = cardsToPlay.getType();
 

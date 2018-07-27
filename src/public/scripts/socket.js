@@ -29,27 +29,18 @@ socket.on("reconnectGame", function(data) {
   displayGameData();
 });
 
-socket.on("playedCards", function(d) {
-  localGame = new Game(d.cg);
-  thisPlayer = localGame.players[thisPlayerIndex];
-
-  var i = localGame.findPlayerIndex(d.updatedPlayer);
-
-  var cardsToRemove = localGame.lastPlayedHand.cards.length;
-  for (var j = 0; j < cardsToRemove; j++) {
-    $("#player" + (i + 1) + ">div.hand>div.card")[0].remove();
-  }
-
-  displayGameData();
-  console.log("player " + (i + 1) + " played cards");
-});
-
+// Called after Player Plays Cards
+// data = updated Server Game
+// localGame.player .playCards, emits("playCards"
 socket.on("readyToPlayCards", function(data) {
+  // Re-Initialize game.
   console.log("readyToPlaycards data: ", data);
   localGame = new Game(data);
   thisPlayer = localGame.players[thisPlayerIndex];
+
   var cardsToPlay = new Hand(thisPlayer.selectedCards);
 
+  // Create Hand that automatically loses on First Play
   if (localGame.lastPlayedHand.val === undefined) {
     createFakeHand();
   }
@@ -61,13 +52,16 @@ socket.on("readyToPlayCards", function(data) {
     cardsToPlay.followsRule() &&
     cardsToPlay.beats(localGame.lastPlayedHand)
   ) {
-    console.log("Gameplay:follows rule and beats lastplayed");
+    console.log("socket.js: follows rule and beats lastplayed");
 
+    // Remove from HTML Played Cards
     var selectedPlayer = $("#player" + thisPlayerIndex.toDivNum());
     var cardsToRemove = selectedPlayer.find(".selected");
+    console.log("readyToPlayCards: cardsToRemove: ", cardsToRemove);
     cardsToRemove.remove();
 
-    //updates localGame and thisPlayer and then pushes changes to server to push to other players
+    // updates localGame and thisPlayer and
+    // emit("playCards") then pushes changes to server to push to other players
     thisPlayer.playCards();
 
     displayGameData();
@@ -107,6 +101,26 @@ socket.on("readyToPlayCards", function(data) {
     }
     alert(errorMessage);
   }
+});
+
+// Called after playCards.  Shows up on other players
+socket.on("playedCards", function(d) {
+  //Reinitialize updated d.cg
+  console.log("playedCards: Start");
+  localGame = new Game(d.cg);
+  thisPlayer = localGame.players[thisPlayerIndex];
+
+  var i = localGame.findPlayerIndex(d.updatedPlayer);
+
+  // Remove unshown cards
+  var cardsToRemove = localGame.lastPlayedHand.cards.length;
+  for (var j = 0; j < cardsToRemove; j++) {
+    $("#player" + (i + 1) + ">div.hand>div.card")[0].remove();
+  }
+  console.log("playedCards : cardsToRemove: ", cardsToRemove);
+
+  displayGameData();
+  console.log("playedCards: player " + (i + 1) + " played cards");
 });
 
 socket.on("skipTurn", function(d) {
