@@ -11,6 +11,9 @@ var server = require("http").Server(app);
 var io = (exports.io = require("socket.io").listen(server));
 var colors = require("colors");
 
+// Load the full build.
+var _ = require("lodash");
+
 var fileRouter = require("./fileRouter.js");
 
 app.use("/", fileRouter);
@@ -114,88 +117,86 @@ io.on("connection", function(socket) {
     // $('body').load('/room/'
     io.to(socket.id).emit("joinedRoom", roomNum);
 
-    // Find the room with roomNum from Globals
-    for (var i = 0; i < Glo.rooms.length; i++) {
-      var thisRoom = Glo.rooms[i];
-      console.log("joinRoom: thisRoom: ".yellow, thisRoom);
+    var thisRoom = _.find(Glo.rooms, function(room) {
+      // == room.id is int, roomNum is string
+      return room.id == roomNum;
+    });
 
-      if (thisRoom.id == roomNum) {
-        //TODO: If Game not started
+    //TODO: If Game not started
 
-        //Add newPlayer with this socket, and player Number, to Glo.rooms[i].players
-        var newPlayer = {};
-        newPlayer.id = socket.id;
-        newPlayer.num = thisRoom.players.length;
+    //TODO: USE PLAYER OBJECT?
+    //Add newPlayer with this socket, and player Number, to Glo.rooms[i].players
+    var newPlayer = {};
+    newPlayer.id = socket.id;
+    newPlayer.num = thisRoom.players.length;
 
-        // Add the player that just joined room
-        thisRoom.players.push(newPlayer);
+    // Add the player that just joined room
+    thisRoom.players.push(newPlayer);
 
-        // If there are 4 players, set up game
-        var readyToStart = thisRoom.players.length === 4;
-        if (readyToStart) {
-          console.log(
-            "joinRoom: Room is ready to start.  emitting to each player".yellow
+    // If there are 4 players, set up game
+    var readyToStart = thisRoom.players.length === 4;
+    if (readyToStart) {
+      console.log(
+        "joinRoom: Room is ready to start.  emitting to each player".yellow
+      );
+
+      // Initialize room.
+      thisRoom.gameStarted = true;
+      thisRoom.game = new Game(thisRoom.players);
+      thisRoom.game.findStartingPlayer();
+
+      // Emit to each player their index and Game object.
+      // So localGame can be updated
+
+      _.forEach(thisRoom.players, function(thisPlayer, index) {
+        // Room.ejs /socket.js
+        io.to(thisPlayer.id).emit("setUpPlayer", {
+          playerIndex: index,
+          updatedGame: thisRoom.game
+        });
+
+        // Emit to last player a second later because page needs to be loaded so it can receive emitted event.
+        if (index === 3) {
+          setTimeout(
+            function(thisRoom) {
+              console.log("joinRoom: Emit to player 4".yellow);
+              io.to(thisPlayer.id).emit("setUpPlayer", {
+                playerIndex: 3,
+                updatedGame: thisRoom.game
+              });
+            },
+            1000,
+            thisRoom
           );
+        }
+      });
+    }
+    /* Reconnect Logic
+          var gameHasStarted = thisRoom.gameStarted
+            if (gameHasStarted && players.length < 4) {
+              //Get the first disconnected Player, change id to current socket's id
+              var newConnected = missingPlayers.shift();
+              newConnected.id = socket.id;
+              players.push(newConnected); //push object containing id and num
+              console.log(players);
 
-          // Initialize room.
-          thisRoom.gameStarted = true;
-          thisRoom.game = new Game(thisRoom.players);
-          thisRoom.game.findStartingPlayer();
+              //Update Server's Game object with new Player id
+              cg.players[newConnected.num].id = newConnected.id;
 
-          // Emit to each player their index and Game object.
-          // So localGame can be updated
-          for (var j = 0; j < thisRoom.players.length; j++) {
-            var thisPlayer = thisRoom.players[j];
-
-            // Room.ejs /socket.js
-            io.to(thisPlayer.id).emit("setUpPlayer", {
-              playerIndex: j,
-              updatedGame: thisRoom.game
-            });
-
-            // Emit to last player a second later because page needs to be loaded so it can receive emitted event.
-            if (j === 3) {
-              setTimeout(
-                function(thisRoom) {
-                  console.log("joinRoom: Emit to player 4".yellow);
-                  io.to(thisPlayer.id).emit("setUpPlayer", {
-                    playerIndex: 3,
-                    updatedGame: thisRoom.game
-                  });
-                },
-                1000,
-                thisRoom
-              );
+              //4 Players are connected, Update everyones game
+              if (players.length === 4) {
+                console.log("reconnectingGame");
+                emitEach("reconnectGame");
+              }
+            } else if (players.length === 4) {
+              console.log("Spectactor joined");
+              io.to(socket.id).emit("reconnectGame", {
+                playerIndex: socketIds.length - 1,
+                updatedGame: cg
+              });
             }
           }
-        }
-
-        // if game has started, but has < 4 players
-        //   if (players.length < 4) {
-        //     //Get the first disconnected Player, change id to current socket's id
-        //     var newConnected = missingPlayers.shift();
-        //     newConnected.id = socket.id;
-        //     players.push(newConnected); //push object containing id and num
-        //     console.log(players);
-
-        //     //Update Server's Game object with new Player id
-        //     cg.players[newConnected.num].id = newConnected.id;
-
-        //     //4 Players are connected, Update everyones game
-        //     if (players.length === 4) {
-        //       console.log("reconnectingGame");
-        //       emitEach("reconnectGame");
-        //     }
-        //   } else if (players.length === 4) {
-        //     console.log("Spectactor joined");
-        //     io.to(socket.id).emit("reconnectGame", {
-        //       playerIndex: socketIds.length - 1,
-        //       updatedGame: cg
-        //     });
-        //   }
-        // }
-      }
-    }
+    */
   });
 
   /*
