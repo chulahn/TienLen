@@ -263,9 +263,32 @@ io.on("connection", function(socket) {
 
     switch (action) {
       case "play":
-        // Get Room Number based socket's id.
-        var roomIndex = getRoomNumberFromSocketId(socket.id);
-        var roomToUpdate = Glo.rooms[roomIndex];
+        var currentRoom = _.find(Glo.rooms, function(room) {
+          console.log(
+            "getRoomNumberFromSocketId: ".cyan,
+            room.id,
+            " socket: ",
+            socket.id
+          );
+          var foundPlayer = _.find(room.players, function(player) {
+            console.log("_.find(room.players, function(player) {".cyan, player);
+            return player.id == socket.id;
+          });
+
+          if (foundPlayer) {
+            console.log(
+              "getRoomNumberFromSocketId: Found room Player: ".cyan,
+              foundPlayer.num,
+              " roomId: ".cyan,
+              room.id,
+              " socket: ".cyan,
+              socket.id
+            );
+          }
+          return foundPlayer;
+        });
+
+        var roomToUpdate = currentRoom;
         console.log(
           "getGameData: emitting readyToPlayCards Play ".green,
           roomToUpdate.game.players
@@ -416,36 +439,6 @@ function emitEach(eventName, data) {
         break;
     }
     console.log("emitting " + eventName + " " + currentSocket.id);
-  }
-}
-
-function getRoomNumberFromSocketId(socketId) {
-  // io.sockets.sockets.length;
-  for (var i = 0; i < Glo.rooms.length; i++) {
-    var thisRoom = Glo.rooms[i];
-    console.log(
-      "getRoomNumberFromSocketId: ".cyan,
-      thisRoom.id,
-      " socket: ",
-      socketId
-    );
-
-    for (var j = 0; j < thisRoom.players.length; j++) {
-      var thisPlayer = thisRoom.players[j];
-      console.log("getRoomNumberFromSocketId: thisPlayer:".cyan, thisPlayer);
-
-      if (thisPlayer.id === socketId) {
-        console.log(
-          "getRoomNumberFromSocketId: Found room Player: ".cyan,
-          j + 1,
-          " roomId: ".cyan,
-          thisRoom.id,
-          " socket: ".cyan,
-          socketId
-        );
-        return i;
-      }
-    }
   }
 }
 
