@@ -82,11 +82,13 @@ io.on("connection", function(socket) {
     // Initialize room with id, and connected first player
     var roomNum = Math.floor(Math.random() * 10000);
 
+    //TODO: Create a Room Object w/ Constructor
     var room = {};
     room.gameStarted = false;
     room.id = roomNum;
     room.players = [];
 
+    //TODO: Create a Player Object w/ Constructor
     var firstPlayer = {};
     firstPlayer.id = socket.id;
     firstPlayer.num = room.players.length;
@@ -214,48 +216,38 @@ io.on("connection", function(socket) {
       data.selectedCards
     );
 
-    // socketId == thisRoom.players[j].id
-    function socketInRoom(thisRoom, socketId) {
-      for (var j = 0; j < thisRoom.players.length; j++) {
-        var thisPlayer = thisRoom.players[j];
-        console.log("socketInRoom thisPlayer: ".cyan, thisPlayer);
-
-        if (thisPlayer.id === socketId) {
+    _.forEach(Glo.rooms, function(room) {
+      var playerSocketInRoom = _.find(room.players, function(player, index) {
+        if (player.id == socket.id) {
           console.log(
-            "socketInRoom: Found Player: ".cyan,
-            j + 1,
+            "playerSocketInRoom: Found Player: ".cyan,
+            index + 1,
             " roomId: ".cyan,
-            thisRoom.id,
+            room.id,
             " socket: ".cyan,
-            socketId
+            socket.id
           );
-          return true;
         }
-      }
-      return false;
-    }
+        return player.id == socket.id;
+      });
 
-    // Find the room where socket is in by going through each room and checking
-    for (var i = 0; i < Glo.rooms.length; i++) {
-      var thisRoom = Glo.rooms[i];
-      console.log("clickedCard: Finding room. thisRoom: ".yellow, thisRoom);
-
-      // If Player Socket is in that room, update server's Global data with data.selectedCards
-      if (socketInRoom(thisRoom, socket.id)) {
+      if (playerSocketInRoom) {
         if (data !== undefined) {
-          thisRoom.game.players[data.playerNum].selectedCards =
-            data.selectedCards;
+          //update server's Global data with data.selectedCards
+
+          room.game.players[data.playerNum].selectedCards = data.selectedCards;
           console.log(
             "clickedCard: Player ".yellow,
             data.playerNum + 1,
             " Cards: ".yellow,
-            thisRoom.game.players[data.playerNum].selectedCards
+            room.game.players[data.playerNum].selectedCards
           );
         }
       } else {
-        console.log("clickedCard: Socket not in Room ".yellow, thisRoom.id);
+        console.log("clickedCard: Socket not in Room ".yellow, room.id);
       }
-    }
+    });
+
     console.log("clickedCard END: ".red, socket.id);
   });
 
