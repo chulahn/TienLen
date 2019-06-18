@@ -111,6 +111,7 @@ io.on("connection", function(socket) {
     console.log(socket.id + " created room./joining " + roomNum);
     socket.join(roomNum);
     io.to(socket.id).emit("createdRoom", roomNum);
+    console.log();
   });
 
   // Join Socket Room
@@ -133,7 +134,7 @@ io.on("connection", function(socket) {
 
     // TODO: If Game not started && < 4
     if (thisRoom) {
-      if (!thisRoom.gameStarted) {
+      if (!thisRoom.gameStarted) {  
         if (thisRoom.players.length < 4) {
   
           // Add newPlayer with this socket, and player Number, to Glo.rooms[i].players
@@ -155,7 +156,6 @@ io.on("connection", function(socket) {
           console.log("joinRoom: Room is ready to start.  emitting to each player".yellow);
     
           // Initialize room. & game
-
           function initializeGame() {
             thisRoom.gameStarted = true;
             thisRoom.game = new Game(thisRoom.players);
@@ -196,9 +196,8 @@ io.on("connection", function(socket) {
       console.log("Did not find thisRoom on joinRoom".red);
       return;
     }
-  
-    // If there are 4 players, set up game
-    
+    console.log();
+        
     /* Reconnect Logic
           var gameHasStarted = thisRoom.gameStarted
             if (gameHasStarted && players.length < 4) {
@@ -244,14 +243,12 @@ io.on("connection", function(socket) {
 
     _.forEach(Glo.rooms, function(room) {
       var playerSocketInRoom = _.find(room.players, function(player, index) {
+        // this is strictly for logging.
         if (player.id == socket.id) {
           console.log(
-            "playerSocketInRoom: Found Player: ".cyan,
-            index + 1,
-            " roomId: ".cyan,
-            room.id,
-            " socket: ".cyan,
-            socket.id
+            "playerSocketInRoom: Found Player: ".cyan, index + 1,
+            " roomId: ".orange, room.id,
+            " socket: ".orange, socket.id
           );
         }
         return player.id == socket.id;
@@ -265,10 +262,8 @@ io.on("connection", function(socket) {
           console.table(room.game);
           room.game.players[data.playerNum].selectedCards = data.selectedCards;
           console.log(
-            "clickedCard: Player ".yellow,
-            data.playerNum + 1,
-            " Cards: ".yellow,
-            room.game.players[data.playerNum].selectedCards
+            "clickedCard: Player ".yellow,data.playerNum + 1,
+            " Cards: ".yellow,room.game.players[data.playerNum].selectedCards
           );
         }
       } else {
@@ -277,6 +272,7 @@ io.on("connection", function(socket) {
     });
 
     console.log("clickedCard END: ".red, socket.id);
+    console.log("");
   });
 
   // Called when a player is making a move. Eg. play or skip
