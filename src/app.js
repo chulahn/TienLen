@@ -235,6 +235,8 @@ io.on("connection", function(socket) {
         if (data !== undefined) {
           //update server's Global data with data.selectedCards
 
+          console.log("data: ",data," data.playerNum: ", data.playerNum)
+          console.table(room.game);
           room.game.players[data.playerNum].selectedCards = data.selectedCards;
           console.log(
             "clickedCard: Player ".yellow,
@@ -316,8 +318,32 @@ io.on("connection", function(socket) {
     );
     updateGame("played", d.newGame, d.updatedPlayer, socket.id);
 
-    var roomIndex = getRoomNumberFromSocketId(socket.id);
-    var roomToUpdate = Glo.rooms[roomIndex];
+    var roomToUpdate = _.find(Glo.rooms, function(room) {
+
+      var foundPlayer = _.find(room.players, function(player){ 
+        console.log("player.id:",player.id," socket.id:",socket.id);
+
+        return player.id == socket.id;
+      });
+
+      if (foundPlayer) {
+        console.log(
+          "getRoomNumberFromSocketId: Found room Player: ".cyan,
+          foundPlayer.num,
+          " roomId: ".cyan,
+          room.id,
+          " socket: ".cyan,
+          socket.id
+        );
+      }
+      return foundPlayer;
+
+    });
+
+    if (!roomToUpdate) {
+      console.log("Didn't find room to update.  Returning");
+      return;
+    }
     var cg = roomToUpdate.game;
 
     var i = cg.findPlayerIndex(d.updatedPlayer);
@@ -506,6 +532,9 @@ function updateGame(action, clientGame, updatedPlayer, socketId) {
 function checkRooms() {
   var allRoomsAndSockets = io.sockets.adapter.rooms;
   var allSockets = io.sockets.adapter.sids;
+
+  //console.log(allRoomsAndSockets);
+  //console.log(allSockets);
 
   for (var room in allRoomsAndSockets) {
     for (var sock in allSockets) {
