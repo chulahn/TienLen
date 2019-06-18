@@ -51,14 +51,12 @@ var gameStarted = false;
 io.on("connection", function(socket) {
   var connectedUsers = io.sockets.sockets.length;
   console.log(
-    connectedUsers,
-    " users(io.sockets.sockets.length): ",
-    socket.id,
-    " has connected"
+    connectedUsers, " users(io.sockets.sockets.length): ",
+    socket.id," has connected"
   );
 
-  // var sessionid = socket.io.engine.id;
-  //console.log(socket);
+  // var sessionid = socket.io.engine.id; 
+  // console.log(socket);
   // console.log(io.nsps['/'].adapter.rooms)
 
   // Push connected user to array of socketIds
@@ -78,45 +76,54 @@ io.on("connection", function(socket) {
   });
 
   // Create a Room Obj, and push to Globals
+  /*
+      socket.on('createdRoom', function (roomNum) {
+      
+        $('body').load('/room', function () {
+          $('title').html('Room ' + roomNum);
+          $('#roomNum').html(roomNum);
+        });
+  */
   socket.on("createRoom", function() {
     // Initialize room with id, and connected first player
     var roomNum = Math.floor(Math.random() * 10000);
 
-    //TODO: Create a Room Object w/ Constructor
-    var room = {};
-    room.gameStarted = false;
-    room.id = roomNum;
-    room.players = [];
+    function initalizeRoom() {
+      //TODO: Create a Room Object w/ Constructor
+      var room = {};
+      room.gameStarted = false;
+      room.id = roomNum;
+      room.players = [];
 
-    //TODO: Create a Player Object w/ Constructor
-    var firstPlayer = {};
-    firstPlayer.id = socket.id;
-    firstPlayer.num = room.players.length;
-    room.players.push(firstPlayer);
+      //TODO: Create a Player Object w/ Constructor
+      var firstPlayer = {};
+      firstPlayer.id = socket.id;                         //Set's firstPlayer.id to the socket who created room
+      firstPlayer.num = room.players.length;              // will be 0
+      room.players.push(firstPlayer);
+      return room;
+    } 
+    var newRoom = initalizeRoom();
 
     // Then Push to Global rooms array
-    Glo.rooms.push(room);
+    Glo.rooms.push(newRoom);
 
-    // Put Socket in room, and emit createdRoom.
+    // Put Socket in room, and .emit("createdRoom", roomNum)
+    console.log(socket.id + " created room./joining " + roomNum);
     socket.join(roomNum);
-    console.log(socket.id + " created/joining " + roomNum);
     io.to(socket.id).emit("createdRoom", roomNum);
   });
 
+  // Join Socket Room
   // Create a playerObject and add to Glo.rooms[i].players
   socket.on("joinRoom", function(roomNum) {
-    // Join socket room
     console.log(
-      "Join Room: ".green,
-      socket.id,
-      " joining room ".green,
-      roomNum
+      "socket.on('joinRoom',".green,socket.id,
+      " joining room ".green,roomNum
     );
     socket.join(roomNum);
     //TODO:log about selected room
 
-    // Emit joinedRoom so browser:index.html loads /rooms
-    // $('body').load('/room/'
+    // Emit joinedRoom so browser:index.html loads /rooms --> $('body').load('/room/'
     io.to(socket.id).emit("joinedRoom", roomNum);
 
     var thisRoom = _.find(Glo.rooms, function(room) {
@@ -124,55 +131,74 @@ io.on("connection", function(socket) {
       return room.id == roomNum;
     });
 
-    //TODO: If Game not started
+    // TODO: If Game not started && < 4
+    if (thisRoom) {
+      if (!thisRoom.gameStarted) {
+        if (thisRoom.players.length < 4) {
+  
+          // Add newPlayer with this socket, and player Number, to Glo.rooms[i].players
+          // Add the player that just joined room
+          //TODO: USE PLAYER OBJECT?
 
-    //TODO: USE PLAYER OBJECT?
-    //Add newPlayer with this socket, and player Number, to Glo.rooms[i].players
-    var newPlayer = {};
-    newPlayer.id = socket.id;
-    newPlayer.num = thisRoom.players.length;
+          function addPlayer() {
+            var newPlayer = {};
+            newPlayer.id = socket.id;
+            newPlayer.num = thisRoom.players.length;
 
-    // Add the player that just joined room
-    thisRoom.players.push(newPlayer);
+            thisRoom.players.push(newPlayer);
+          }
+          addPlayer();
+        }
 
-    // If there are 4 players, set up game
-    var readyToStart = thisRoom.players.length === 4;
-    if (readyToStart) {
-      console.log(
-        "joinRoom: Room is ready to start.  emitting to each player".yellow
-      );
+        var readyToStart = thisRoom.players.length === 4;
+        if (readyToStart) {
+          console.log("joinRoom: Room is ready to start.  emitting to each player".yellow);
+    
+          // Initialize room. & game
 
-      // Initialize room.
-      thisRoom.gameStarted = true;
-      thisRoom.game = new Game(thisRoom.players);
-      thisRoom.game.findStartingPlayer();
+          function initializeGame() {
+            thisRoom.gameStarted = true;
+            thisRoom.game = new Game(thisRoom.players);
+            thisRoom.game.findStartingPlayer();
+          }
+          initializeGame();
 
-      // Emit to each player their index and Game object.
-      // So localGame can be updated
-
-      _.forEach(thisRoom.players, function(thisPlayer, index) {
-        // Room.ejs /socket.js
-        io.to(thisPlayer.id).emit("setUpPlayer", {
-          playerIndex: index,
-          updatedGame: thisRoom.game
-        });
-
-        // Emit to last player a second later because page needs to be loaded so it can receive emitted event.
-        if (index === 3) {
-          setTimeout(
-            function(thisRoom) {
-              console.log("joinRoom: Emit to player 4".yellow);
+          function sendInitializedGameToClient() {
+            // Emit to each player their index and Game object.     // So localGame can be updated
+            _.forEach(thisRoom.players, function(thisPlayer, index) {
+              // Room.ejs /socket.js
               io.to(thisPlayer.id).emit("setUpPlayer", {
-                playerIndex: 3,
+                playerIndex: index,
                 updatedGame: thisRoom.game
               });
-            },
-            1000,
-            thisRoom
-          );
+      
+              // Emit to last player a second later because page needs to be loaded so it can receive emitted event.
+              if (index === 3) {
+                setTimeout(
+                  function(thisRoom) {
+                    console.log("joinRoom: Emit to player 4".yellow);
+                    io.to(thisPlayer.id).emit("setUpPlayer", {
+                      playerIndex: 3,
+                      updatedGame: thisRoom.game
+                    });
+                  },
+                  1000,
+                  thisRoom
+                );
+              }
+            });
+          }
+          sendInitializedGameToClient();
         }
-      });
+      }
     }
+    else {
+      console.log("Did not find thisRoom on joinRoom".red);
+      return;
+    }
+  
+    // If there are 4 players, set up game
+    
     /* Reconnect Logic
           var gameHasStarted = thisRoom.gameStarted
             if (gameHasStarted && players.length < 4) {
@@ -404,8 +430,9 @@ io.on("connection", function(socket) {
   socket.on("disconnect", function() {
     //Remove disconnected Player's socket
     var discPerson = socketIds.indexOf(socket.id);
-    socketIds.splice(discPerson, 1);
-    console.log(socketIds.length + " sockets left.");
+    discPerson = Glo.socketIds.indexOf(socket.id);
+    Glo.socketIds.splice(discPerson, 1);
+    console.log(Glo.socketIds.length + " sockets left.");
 
     //Find the Object which has the same id
     //Remove from players and push to missingPlayers
