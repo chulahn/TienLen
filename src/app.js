@@ -445,8 +445,30 @@ function emitEach(eventName, data) {
 // Change cg to Glo.rooms[i].game
 // Called when a player plays cards or skip.
 function updateGame(action, clientGame, updatedPlayer, socketId) {
-  var roomIndex = getRoomNumberFromSocketId(socketId);
-  var roomToUpdate = Glo.rooms[roomIndex];
+  var roomToUpdate = _.find(Glo.rooms, function(room) {
+    console.log(
+      "getRoomNumberFromSocketId: ".cyan,
+      room.id,
+      " socket: ",
+      socketId
+    );
+    var foundPlayer = _.find(room.players, function(player) {
+      console.log("_.find(room.players, function(player) {".cyan, player);
+      return player.id == socketId;
+    });
+
+    if (foundPlayer) {
+      console.log(
+        "getRoomNumberFromSocketId: Found room Player: ".cyan,
+        foundPlayer.num,
+        " roomId: ".cyan,
+        room.id,
+        " socket: ".cyan,
+        socketId
+      );
+    }
+    return foundPlayer;
+  });
 
   var cg = roomToUpdate.game;
 
@@ -464,6 +486,7 @@ function updateGame(action, clientGame, updatedPlayer, socketId) {
 
   // update Global with updatedPlayer, lastPlayedHand, leader, and currentRule
   if (action === "played") {
+    //what does findPlayerIndex do?
     var i = cg.findPlayerIndex(updatedPlayer);
     cg.players[i] = updatedPlayer;
     cg.players[i].__proto__ = Player.prototype;
@@ -475,10 +498,6 @@ function updateGame(action, clientGame, updatedPlayer, socketId) {
     cg.currentRule = clientGame.currentRule;
   }
 
-  console.log(
-    "updateGame: Glo.rooms[roomIndex] == roomToUpdate".yellow,
-    Glo.rooms[roomIndex] == roomToUpdate
-  );
   console.log("updateGame: END".red);
 }
 
